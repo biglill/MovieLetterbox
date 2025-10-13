@@ -1,0 +1,78 @@
+.root {
+    -fx-background-color: #D6D9E8;
+    -fx-font-family: "Inter", "System";
+    -fx-font-size: 14px;
+}
+
+.label {
+    -fx-text-fill: #333333;
+}
+
+.title-label {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1A202C;
+    -fx-padding: 0 0 10px 0;
+}
+
+.text-input {
+    -fx-background-color: #FFFFFF;
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-padding: 10px 15px;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0, 0, 0, 0.1),
+            5,
+
+            0,
+
+            0,
+
+            2
+    );
+}
+
+.text-input:focused {
+    -fx-border-color: #4C51BF;
+    -fx-border-width: 2px;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(76, 81, 191, 0.4),
+            8,
+            0,
+            0,
+            2
+    );
+}
+
+.button {
+    -fx-background-color: #4C51BF;
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-padding: 12px 25px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(
+            gaussian,
+            rgba(0, 0, 0, 0.2),
+            5,
+            0,
+            0,
+            2
+    );
+}
+
+.button:hover {
+    -fx-background-color: #646AF1;
+    -fx-scale-y: 1.01;
+    -fx-scale-x: 1.01;
+}
+
+.button:pressed {
+    -fx-background-color: #383B89;
+    -fx-translate-y: 1;
+    -fx-effect: none;
+}
