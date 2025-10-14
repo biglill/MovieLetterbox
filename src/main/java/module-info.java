@@ -1,8 +1,21 @@
 module com.example.demo {
+    // Required for JavaFX UI components
     requires javafx.controls;
     requires javafx.fxml;
 
+    // Required for the Firebase Admin SDK
+    requires firebase.admin;
 
+    // Required for Google Cloud authentication and Firestore services
+    requires com.google.auth;
+    requires com.google.auth.oauth2;
+    requires google.cloud.firestore;
+    requires com.google.api.apicommon;
+    requires google.cloud.core;
+
+    // Opens your package to the FXML loader so it can access your controller
     opens com.example.demo to javafx.fxml;
+
+    // Exports your package so the JavaFX application can launch
     exports com.example.demo;
 }
