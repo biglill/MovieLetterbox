@@ -14,26 +14,21 @@ import java.util.concurrent.ExecutionException;
 
 public class HelloController {
 
-    // Firebase Service to interact with the database
     private FirebaseService firebaseService;
 
-    // Panes for switching between Sign-In and Sign-Up views
     @FXML
     private VBox signInPane;
     @FXML
     private VBox signUpPane;
 
-    // UI element for user feedback (e.g., success or error messages)
     @FXML
     private Label feedbackLabel;
 
-    // --- Sign-In Fields ---
     @FXML
     private TextField signInEmailField;
     @FXML
     private PasswordField signInPasswordField;
 
-    // --- Sign-Up Fields ---
     @FXML
     private TextField signUpNameField;
     @FXML
@@ -41,37 +36,60 @@ public class HelloController {
     @FXML
     private PasswordField signUpPasswordField;
 
-    /**
-     * Initializes the controller. This method is called automatically after the FXML file has been loaded.
-     * It sets up the connection to Firebase.
-     */
     @FXML
     public void initialize() {
         try {
             firebaseService = new FirebaseService();
             System.out.println("Firebase initialized successfully.");
-            feedbackLabel.setText(""); // Clear feedback label on start
+            feedbackLabel.setText("Firebase connected.");
         } catch (IOException e) {
-            System.err.println("Failed to initialize Firebase. Make sure 'serviceAccountKey.json' is in the project root.");
+            System.err.println("Failed to initialize Firebase. Make sure 'serviceAccountKey.json' is in src/main/resources.");
+            e.printStackTrace();
             feedbackLabel.setText("Error: Could not connect to the database.");
         }
     }
 
     /**
      * Handles the action of clicking the "Sign In" button.
+     * It retrieves user data from Firestore and validates the password.
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
         String email = signInEmailField.getText();
         String password = signInPasswordField.getText();
-        System.out.println("Attempting to sign in with Email: " + email);
-        // TODO: Add logic to authenticate the user against Firestore data.
-        feedbackLabel.setText("Sign-in functionality is not yet implemented.");
+
+        if (email.isBlank() || password.isBlank()) {
+            feedbackLabel.setText("Please enter both email and password.");
+            return;
+        }
+
+        try {
+            Map<String, Object> userData = firebaseService.getUserByEmail(email);
+
+            if (userData == null) {
+                feedbackLabel.setText("Sign-in failed: User not found.");
+                return;
+            }
+
+            // In a real app, this would be a hashed password comparison.
+            String storedPassword = (String) userData.get("password");
+
+            if (password.equals(storedPassword)) {
+                feedbackLabel.setText("Sign-in successful! Welcome, " + userData.get("name") + ".");
+                // TODO: Add logic to navigate to the main part of your application.
+            } else {
+                feedbackLabel.setText("Sign-in failed: Incorrect password.");
+            }
+
+        } catch (ExecutionException | InterruptedException e) {
+            System.err.println("Error during sign-in process.");
+            feedbackLabel.setText("Error: Could not sign in. See console for details.");
+            e.printStackTrace();
+        }
     }
 
     /**
      * Handles the action of clicking the "Sign Up" button.
-     * It validates input, saves the new user to Firestore, and switches to the sign-in view.
      */
     @FXML
     void handleSignUpAction(ActionEvent event) {
@@ -80,39 +98,35 @@ public class HelloController {
         String password = signUpPasswordField.getText();
 
         if (name.isBlank() || email.isBlank() || password.isBlank()) {
-            // In a real app, you would show this error on the sign-up screen itself.
-            System.err.println("Sign-up error: All fields are required.");
+            feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
         }
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
         userData.put("email", email);
-        // WARNING: In a production application, you should ALWAYS hash the password before saving.
-        // For example: userData.put("passwordHash", hashFunction(password));
+        // WARNING: In a production application, you should ALWAYS hash the password.
+        userData.put("password", password);
 
         try {
-            firebaseService.saveUserDetails(userData);
+            String newUserId = firebaseService.saveUserDetails(userData);
+            System.out.println("Successfully saved user data with ID: " + newUserId);
+
             feedbackLabel.setText("Account created successfully! Please sign in.");
-            showSignInPane(null); // Switch back to the sign-in view
+            showSignInPane(null);
         } catch (ExecutionException | InterruptedException e) {
             System.err.println("Error saving user data to Firestore.");
-            feedbackLabel.setText("Error: Could not create the account.");
+            feedbackLabel.setText("Error: Could not create account. See console for details.");
+            e.printStackTrace();
         }
     }
 
-    /**
-     * Makes the Sign-In pane visible and hides the Sign-Up pane.
-     */
     @FXML
     void showSignInPane(ActionEvent event) {
         signInPane.setVisible(true);
         signUpPane.setVisible(false);
     }
 
-    /**
-     * Makes the Sign-Up pane visible and hides the Sign-In pane.
-     */
     @FXML
     void showSignUpPane(ActionEvent event) {
         signUpPane.setVisible(true);
