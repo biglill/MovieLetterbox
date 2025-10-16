@@ -43,9 +43,10 @@ public class HelloController {
             System.out.println("Firebase initialized successfully.");
             feedbackLabel.setText("Firebase connected.");
         } catch (IOException e) {
-            System.err.println("Failed to initialize Firebase. Make sure 'serviceAccountKey.json' is in src/main/resources.");
+            // This error now reflects the environment variable requirement.
+            System.err.println(e.getMessage());
             e.printStackTrace();
-            feedbackLabel.setText("Error: Could not connect to the database.");
+            feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
     }
 
@@ -55,6 +56,11 @@ public class HelloController {
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
+        if (firebaseService == null) {
+            feedbackLabel.setText("Error: Database service is not available.");
+            return;
+        }
+
         String email = signInEmailField.getText();
         String password = signInPasswordField.getText();
 
@@ -93,6 +99,11 @@ public class HelloController {
      */
     @FXML
     void handleSignUpAction(ActionEvent event) {
+        if (firebaseService == null) {
+            feedbackLabel.setText("Error: Database service is not available.");
+            return;
+        }
+
         String name = signUpNameField.getText();
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
@@ -133,3 +144,4 @@ public class HelloController {
         signInPane.setVisible(false);
     }
 }
+

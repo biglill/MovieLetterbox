@@ -7,6 +7,7 @@ import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
@@ -17,13 +18,16 @@ public class FirebaseService {
     private final Firestore db;
 
     public FirebaseService() throws IOException {
-        // FIX: Load the service account key from the classpath as a resource stream.
-        // This is more reliable than a file path. Make sure the JSON file is in `src/main/resources`.
-        InputStream serviceAccount = getClass().getClassLoader().getResourceAsStream("serviceAccountKey.json");
+        // STEP 1: Read the path to the service account key from an environment variable.
+        // This is the standard, secure way to handle credentials.
+        String serviceAccountPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
 
-        if (serviceAccount == null) {
-            throw new IOException("Error: serviceAccountKey.json not found in src/main/resources. Please ensure the file is there.");
+        if (serviceAccountPath == null || serviceAccountPath.isBlank()) {
+            throw new IOException("Error: The GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. Please set it to the path of your serviceAccountKey.json file.");
         }
+
+        // STEP 2: Initialize Firebase using the path from the environment variable.
+        FileInputStream serviceAccount = new FileInputStream(serviceAccountPath);
 
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccount))
@@ -52,7 +56,7 @@ public class FirebaseService {
     }
 
     /**
-     * CHANGE: Retrieves a user document from Firestore based on their email.
+     * Retrieves a user document from Firestore based on their email.
      * This is essential for the sign-in process.
      * @param email The email of the user to search for.
      * @return A Map containing the user's data if found, otherwise null.
