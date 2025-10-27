@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutionException;
 public class HelloController {
 
     private FirebaseService firebaseService;
-    private File selectedPhotoFile; // Holds the selected image file
+    private File selectedPhotoFile;
 
     @FXML
     private VBox signInPane;
@@ -30,8 +30,11 @@ public class HelloController {
     @FXML
     private Label feedbackLabel;
 
+    // +++++++++ CHANGES START +++++++++
     @FXML
-    private TextField signInEmailField;
+    private TextField signInUsernameField; // Changed from signInEmailField
+    // +++++++++ CHANGES END +++++++++
+
     @FXML
     private PasswordField signInPasswordField;
 
@@ -46,12 +49,10 @@ public class HelloController {
     @FXML
     private TextField signUpAgeField;
 
-    // +++++++++ NEW FXML VARS +++++++++
     @FXML
     private ImageView profileImageView;
     @FXML
     private Label profilePhotoLabel;
-    // ++++++++++++++++++++++++++++++++++
 
     @FXML
     public void initialize() {
@@ -64,9 +65,13 @@ public class HelloController {
             e.printStackTrace();
             feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
-        // Load a default "placeholder" image
-        Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
-        profileImageView.setImage(defaultImage);
+        // Load a default "placeholder" image (ensure placeholder.png is in resources/com/example/demo)
+        try {
+            Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
+            profileImageView.setImage(defaultImage);
+        } catch (Exception e) {
+            System.err.println("Warning: placeholder.png not found.");
+        }
     }
 
     /**
@@ -74,32 +79,36 @@ public class HelloController {
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
-        // (This method is unchanged from your previous version)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
         }
 
-        String email = signInEmailField.getText();
+        // +++++++++ CHANGES START +++++++++
+        String username = signInUsernameField.getText();
         String password = signInPasswordField.getText();
 
-        if (email.isBlank() || password.isBlank()) {
-            feedbackLabel.setText("Please enter both email and password.");
+        if (username.isBlank() || password.isBlank()) {
+            feedbackLabel.setText("Please enter both username and password.");
             return;
         }
 
         try {
-            Map<String, Object> userData = firebaseService.getUserByEmail(email);
+            // Call the new method
+            Map<String, Object> userData = firebaseService.getUserByUsername(username);
 
             if (userData == null) {
                 feedbackLabel.setText("Sign-in failed: User not found.");
                 return;
             }
+            // +++++++++ CHANGES END +++++++++
 
+            // In a real app, this would be a hashed password comparison.
             String storedPassword = (String) userData.get("password");
 
             if (password.equals(storedPassword)) {
                 feedbackLabel.setText("Sign-in successful! Welcome, " + userData.get("name") + ".");
+                // TODO: Add logic to navigate to the main part of your application.
             } else {
                 feedbackLabel.setText("Sign-in failed: Incorrect password.");
             }
@@ -116,6 +125,7 @@ public class HelloController {
      */
     @FXML
     void handleSignUpAction(ActionEvent event) {
+        // (This method is unchanged)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -135,17 +145,15 @@ public class HelloController {
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
         userData.put("email", email);
-        userData.put("password", password); // WARNING: Hash this in a real app
+        userData.put("password", password);
         userData.put("username", username);
         userData.put("age", age);
-        userData.put("profilePhotoUrl", null); // Set to null initially
+        userData.put("profilePhotoUrl", null);
 
         try {
-            // Step 1: Save the user text data and get the new user ID
             String newUserId = firebaseService.saveUserDetails(userData);
             System.out.println("Successfully saved user data with ID: " + newUserId);
 
-            // Step 2: If a photo was selected, upload it
             if (selectedPhotoFile != null) {
                 try {
                     firebaseService.uploadProfilePhoto(selectedPhotoFile, newUserId);
@@ -172,13 +180,13 @@ public class HelloController {
      */
     @FXML
     void handleChoosePhotoAction(ActionEvent event) {
+        // (This method is unchanged)
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Profile Photo");
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
         );
 
-        // Get the stage from the event source
         Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
         File file = fileChooser.showOpenDialog(stage);
 
@@ -186,8 +194,6 @@ public class HelloController {
             try {
                 selectedPhotoFile = file;
                 profilePhotoLabel.setText(file.getName());
-
-                // Display the image in the ImageView
                 Image image = new Image(file.toURI().toString());
                 profileImageView.setImage(image);
             } catch (Exception e) {
@@ -201,7 +207,7 @@ public class HelloController {
     void showSignInPane(ActionEvent event) {
         signInPane.setVisible(true);
         signUpPane.setVisible(false);
-        clearSignUpForm(); // Clear the form when switching
+        clearSignUpForm();
     }
 
     @FXML
@@ -214,6 +220,7 @@ public class HelloController {
      * Helper method to clear all sign-up fields.
      */
     private void clearSignUpForm() {
+        // (This method is unchanged)
         signUpNameField.clear();
         signUpEmailField.clear();
         signUpPasswordField.clear();
@@ -222,7 +229,15 @@ public class HelloController {
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
-        profileImageView.setImage(new Image(getClass().getResourceAsStream("placeholder.png")));
+        try {
+            profileImageView.setImage(new Image(getClass().getResourceAsStream("placeholder.png")));
+        } catch (Exception e) {
+            // placeholder.png not found, do nothing
+        }
         feedbackLabel.setText("");
+
+        // Also clear the sign-in fields
+        signInUsernameField.clear();
+        signInPasswordField.clear();
     }
 }

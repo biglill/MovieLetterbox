@@ -23,24 +23,21 @@ public class FirebaseService {
     private final Firestore db;
     private final Storage storage;
 
-    // !!! IMPORTANT: Find this value in your Firebase Console !!!
-    // Go to Storage -> Files -> It looks like "your-project-id.appspot.com"
-    private final String BUCKET_NAME = "movieletterbox.firebasestorage.app";
+    // Make sure this is set to your project's bucket name
+    private final String BUCKET_NAME = "movieletterbox.firebasestorage.app"; // <-- Ensure this is correct!
 
     public FirebaseService() throws IOException {
-        // STEP 1: Read the path to the service account key from an environment variable.
         String serviceAccountPath = System.getenv("GOOGLE_APPLICATION_CREDENTIALS");
 
         if (serviceAccountPath == null || serviceAccountPath.isBlank()) {
             throw new IOException("Error: The GOOGLE_APPLICATION_CREDENTIALS environment variable is not set. Please set it to the path of your serviceAccountKey.json file.");
         }
 
-        // STEP 2: Initialize Firebase using the path from the environment variable.
         FileInputStream serviceAccountStream = new FileInputStream(serviceAccountPath);
 
         FirebaseOptions options = new FirebaseOptions.Builder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccountStream))
-                .setStorageBucket(BUCKET_NAME) // <-- ADD THIS
+                .setStorageBucket(BUCKET_NAME)
                 .build();
 
         if (FirebaseApp.getApps().isEmpty()) {
@@ -49,8 +46,6 @@ public class FirebaseService {
 
         db = FirestoreClient.getFirestore();
 
-        // STEP 3: Initialize Google Cloud Storage
-        // We need to "reset" the stream to use it again for storage credentials
         FileInputStream serviceAccountStreamForStorage = new FileInputStream(serviceAccountPath);
         storage = StorageOptions.newBuilder()
                 .setCredentials(GoogleCredentials.fromStream(serviceAccountStreamForStorage))
@@ -58,13 +53,6 @@ public class FirebaseService {
                 .getService();
     }
 
-    /**
-     * Saves a user's details to the "users" collection in Firestore.
-     * @param userData A map containing the user's data (e.g., name, email).
-     * @return The auto-generated document ID of the new user.
-     * @throws ExecutionException If the database operation fails.
-     * @throws InterruptedException If the thread is interrupted.
-     */
     public String saveUserDetails(Map<String, Object> userData) throws ExecutionException, InterruptedException {
         DocumentReference docRef = db.collection("users").document();
         ApiFuture<WriteResult> future = docRef.set(userData);
@@ -72,48 +60,65 @@ public class FirebaseService {
         return docRef.getId();
     }
 
-    /**
-     * Uploads a profile photo to Firebase Storage and updates the user's Firestore document
-     * with the public URL.
-     * @param file The image file to upload.
-     * @param userId The unique ID of the user (from Firestore) to link the photo.
-     * @throws IOException If the file read fails.
-     */
     public void uploadProfilePhoto(File file, String userId) throws IOException, ExecutionException, InterruptedException {
         String fileExtension = getFileExtension(file.getName());
-        String blobName = "profile-images/" + userId + "." + fileExtension; // e.g., "profile-images/abc123xyz.jpg"
+        String blobName = "profile-images/" + userId + "." + fileExtension;
 
         BlobId blobId = BlobId.of(BUCKET_NAME, blobName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
                 .setContentType(Files.probeContentType(file.toPath()))
                 .build();
 
-        // Upload the file
         Blob blob = storage.create(blobInfo, Files.readAllBytes(file.toPath()));
-
-        // Make the file public
         blob.createAcl(Acl.of(Acl.User.ofAllUsers(), Acl.Role.READER));
-
-        // Get the public URL
         String publicUrl = blob.getMediaLink();
 
-        // Update the user's document in Firestore with the new URL
         DocumentReference userDoc = db.collection("users").document(userId);
         ApiFuture<WriteResult> updateFuture = userDoc.update("profilePhotoUrl", publicUrl);
-        updateFuture.get(); // Wait for the update to complete
+        updateFuture.get();
         System.out.println("Successfully uploaded photo and updated user document.");
     }
 
     private String getFileExtension(String fileName) {
         int lastIndexOf = fileName.lastIndexOf(".");
         if (lastIndexOf == -1) {
-            return ""; // No extension
+            return "";
         }
         return fileName.substring(lastIndexOf + 1);
     }
 
+    // +++++++++ NEW METHOD START +++++++++
+    /**
+     * Retrieves a user document from Firestore based on their username.
+     * @param username The username of the user to search for.
+     * @return A Map containing the user's data if found, otherwise null.
+     * @throws ExecutionException If the database operation fails.
+     * @throws InterruptedException If the thread is interrupted.
+     */
+    public Map<String, Object> getUserByUsername(String username) throws ExecutionException, InterruptedException {
+        // Create a query to search for a user with the matching username.
+        CollectionReference users = db.collection("users");
+        Query query = users.whereEqualTo("username", username);
+
+        // Execute the query.
+        ApiFuture<QuerySnapshot> querySnapshot = query.get();
+
+        // Check if any documents were returned.
+        if (!querySnapshot.get().getDocuments().isEmpty()) {
+            // Get the first document (usernames should be unique).
+            QueryDocumentSnapshot document = querySnapshot.get().getDocuments().get(0);
+            System.out.println("Found user with username: " + username);
+            return document.getData();
+        } else {
+            System.out.println("No user found with username: " + username);
+            return null;
+        }
+    }
+    // +++++++++ NEW METHOD END +++++++++
+
     /**
      * Retrieves a user document from Firestore based on their email.
+     * (This method is no longer used for sign-in but could be useful elsewhere)
      * @param email The email of the user to search for.
      * @return A Map containing the user's data if found, otherwise null.
      * @throws ExecutionException If the database operation fails.

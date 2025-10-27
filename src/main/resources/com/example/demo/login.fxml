@@ -22,9 +22,10 @@
         <Label styleClass="title-label" text="Welcome Back!" />
         <Label text="Please enter your details to sign in." />
         <Label fx:id="feedbackLabel" styleClass="feedback-label" wrapText="true" />
+
         <VBox spacing="5.0">
-            <Label text="Email Address" />
-            <TextField fx:id="signInEmailField" promptText="you@example.com" styleClass="text-input" />
+            <Label text="Username" />
+            <TextField fx:id="signInUsernameField" promptText="Enter your username" styleClass="text-input" />
         </VBox>
         <VBox spacing="5.0">
             <Label text="Password" />
@@ -50,6 +51,7 @@
         </ImageView>
         <Button onAction="#handleChoosePhotoAction" styleClass="button" text="Choose Profile Photo" />
         <Label fx:id="profilePhotoLabel" styleClass="feedback-label" text="No photo selected." />
+
         <VBox spacing="5.0">
             <Label text="Full Name" />
             <TextField fx:id="signUpNameField" promptText="Enter your full name" styleClass="text-input" />
