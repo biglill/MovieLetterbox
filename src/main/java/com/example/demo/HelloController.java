@@ -5,8 +5,13 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,6 +20,7 @@ import java.util.concurrent.ExecutionException;
 public class HelloController {
 
     private FirebaseService firebaseService;
+    private File selectedPhotoFile; // Holds the selected image file
 
     @FXML
     private VBox signInPane;
@@ -35,14 +41,17 @@ public class HelloController {
     private TextField signUpEmailField;
     @FXML
     private PasswordField signUpPasswordField;
-
-    // +++++++++ NEW FIELDS START +++++++++
     @FXML
     private TextField signUpUsernameField;
     @FXML
     private TextField signUpAgeField;
-    // +++++++++ NEW FIELDS END +++++++++
 
+    // +++++++++ NEW FXML VARS +++++++++
+    @FXML
+    private ImageView profileImageView;
+    @FXML
+    private Label profilePhotoLabel;
+    // ++++++++++++++++++++++++++++++++++
 
     @FXML
     public void initialize() {
@@ -51,19 +60,21 @@ public class HelloController {
             System.out.println("Firebase initialized successfully.");
             feedbackLabel.setText("Firebase connected.");
         } catch (IOException e) {
-            // This error now reflects the environment variable requirement.
             System.err.println(e.getMessage());
             e.printStackTrace();
             feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
+        // Load a default "placeholder" image
+        Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
+        profileImageView.setImage(defaultImage);
     }
 
     /**
      * Handles the action of clicking the "Sign In" button.
-     * It retrieves user data from Firestore and validates the password.
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
+        // (This method is unchanged from your previous version)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -85,12 +96,10 @@ public class HelloController {
                 return;
             }
 
-            // In a real app, this would be a hashed password comparison.
             String storedPassword = (String) userData.get("password");
 
             if (password.equals(storedPassword)) {
                 feedbackLabel.setText("Sign-in successful! Welcome, " + userData.get("name") + ".");
-                // TODO: Add logic to navigate to the main part of your application.
             } else {
                 feedbackLabel.setText("Sign-in failed: Incorrect password.");
             }
@@ -115,12 +124,9 @@ public class HelloController {
         String name = signUpNameField.getText();
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
-
-        // +++++++++ GET NEW FIELD VALUES +++++++++
         String username = signUpUsernameField.getText();
         String age = signUpAgeField.getText();
 
-        // +++++++++ UPDATE VALIDATION +++++++++
         if (name.isBlank() || email.isBlank() || password.isBlank() || username.isBlank() || age.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
@@ -129,19 +135,31 @@ public class HelloController {
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
         userData.put("email", email);
-        // WARNING: In a production application, you should ALWAYS hash the password.
-        userData.put("password", password);
-
-        // +++++++++ ADD NEW DATA TO MAP +++++++++
+        userData.put("password", password); // WARNING: Hash this in a real app
         userData.put("username", username);
-        userData.put("age", age); // Stored as a String. See note below.
+        userData.put("age", age);
+        userData.put("profilePhotoUrl", null); // Set to null initially
 
         try {
+            // Step 1: Save the user text data and get the new user ID
             String newUserId = firebaseService.saveUserDetails(userData);
             System.out.println("Successfully saved user data with ID: " + newUserId);
 
+            // Step 2: If a photo was selected, upload it
+            if (selectedPhotoFile != null) {
+                try {
+                    firebaseService.uploadProfilePhoto(selectedPhotoFile, newUserId);
+                    System.out.println("Photo uploaded and linked successfully.");
+                } catch (Exception e) {
+                    System.err.println("Error uploading photo: " + e.getMessage());
+                    e.printStackTrace();
+                    feedbackLabel.setText("Account created, but photo upload failed. See console.");
+                }
+            }
+
             feedbackLabel.setText("Account created successfully! Please sign in.");
             showSignInPane(null);
+
         } catch (ExecutionException | InterruptedException e) {
             System.err.println("Error saving user data to Firestore.");
             feedbackLabel.setText("Error: Could not create account. See console for details.");
@@ -149,15 +167,62 @@ public class HelloController {
         }
     }
 
+    /**
+     * Opens a FileChooser to select a profile photo.
+     */
+    @FXML
+    void handleChoosePhotoAction(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Select Profile Photo");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.gif")
+        );
+
+        // Get the stage from the event source
+        Stage stage = (Stage) ((javafx.scene.Node) event.getSource()).getScene().getWindow();
+        File file = fileChooser.showOpenDialog(stage);
+
+        if (file != null) {
+            try {
+                selectedPhotoFile = file;
+                profilePhotoLabel.setText(file.getName());
+
+                // Display the image in the ImageView
+                Image image = new Image(file.toURI().toString());
+                profileImageView.setImage(image);
+            } catch (Exception e) {
+                System.err.println("Error loading image preview: " + e.getMessage());
+                profilePhotoLabel.setText("Error: Could not load image.");
+            }
+        }
+    }
+
     @FXML
     void showSignInPane(ActionEvent event) {
         signInPane.setVisible(true);
         signUpPane.setVisible(false);
+        clearSignUpForm(); // Clear the form when switching
     }
 
     @FXML
     void showSignUpPane(ActionEvent event) {
         signUpPane.setVisible(true);
         signInPane.setVisible(false);
+    }
+
+    /**
+     * Helper method to clear all sign-up fields.
+     */
+    private void clearSignUpForm() {
+        signUpNameField.clear();
+        signUpEmailField.clear();
+        signUpPasswordField.clear();
+        signUpUsernameField.clear();
+        signUpAgeField.clear();
+
+        selectedPhotoFile = null;
+        profilePhotoLabel.setText("No photo selected.");
+        profileImageView.setImage(new Image(getClass().getResourceAsStream("placeholder.png")));
+        feedbackLabel.setText("");
     }
 }

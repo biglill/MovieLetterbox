@@ -2,6 +2,7 @@ module com.example.demo {
     // Required for JavaFX UI components
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.graphics; // <-- ADD THIS for Image and ImageView
 
     // Required for the Firebase Admin SDK
     requires firebase.admin;
@@ -12,6 +13,7 @@ module com.example.demo {
     requires google.cloud.firestore;
     requires com.google.api.apicommon;
     requires google.cloud.core;
+    requires google.cloud.storage; // <-- ADD THIS for Firebase Storage
 
     // Opens your package to the FXML loader so it can access your controller
     opens com.example.demo to javafx.fxml;

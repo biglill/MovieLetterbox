@@ -76,3 +76,10 @@
     -fx-translate-y: 1;
     -fx-effect: none;
 }
+
+.profile-image-view {
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 2px;
+    -fx-border-radius: 50;
+    -fx-background-color: #FFFFFF;
+}
