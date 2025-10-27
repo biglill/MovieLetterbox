@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.demo.MainMenuController"
+      alignment="CENTER" spacing="20.0" styleClass="root"
+      stylesheets="@Style.css">
+    <padding>
+        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+    </padding>
+
+    <Label styleClass="title-label" text="Main Menu" />
+
+    <Label fx:id="welcomeLabel" text="Welcome, [User]!" />
+
+    <Label text="You are now logged in." />
+
+    <Button fx:id="logoutButton" onAction="#handleLogoutAction" styleClass="button" text="Log Out" />
+
+</VBox>

@@ -2,6 +2,10 @@ package com.example.demo;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+// +++ ADD THESE IMPORTS +++
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+// +++++++++++++++++++++++++
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -46,10 +50,11 @@ public class HelloController {
     @FXML
     private TextField signUpAgeField;
 
-    // +++++++++ NEW FXML VAR +++++++++
+    @FXML
+    private TextField signUpPhoneField;
+
     @FXML
     private PasswordField signUpConfirmPasswordField;
-    // ++++++++++++++++++++++++++++++++
 
     @FXML
     private ImageView profileImageView;
@@ -58,6 +63,7 @@ public class HelloController {
 
     @FXML
     public void initialize() {
+        // (This method is unchanged)
         try {
             firebaseService = new FirebaseService();
             System.out.println("Firebase initialized successfully.");
@@ -80,7 +86,6 @@ public class HelloController {
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
-        // (This method is unchanged from the last step)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -105,7 +110,34 @@ public class HelloController {
             String storedPassword = (String) userData.get("password");
 
             if (password.equals(storedPassword)) {
-                feedbackLabel.setText("Sign-in successful! Welcome, " + userData.get("name") + ".");
+                // +++ SIGN-IN SUCCESSFUL! LOAD MAIN MENU +++
+                try {
+                    // 1. Load the new FXML file
+                    FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("main-menu.fxml"));
+                    // 2. Create the new scene (use your 750x750 size)
+                    Scene scene = new Scene(fxmlLoader.load(), 750, 750);
+                    scene.getStylesheets().add(HelloApplication.class.getResource("Style.css").toExternalForm());
+
+                    // 3. Get the controller for the new scene
+                    MainMenuController controller = fxmlLoader.getController();
+                    // 4. Pass the user's data to the new controller
+                    controller.setUserData(userData);
+
+                    // 5. Get the current stage (the window)
+                    Stage stage = (Stage) signInPane.getScene().getWindow();
+
+                    // 6. Set the new scene on the stage
+                    stage.setScene(scene);
+                    stage.setTitle("Main Menu"); // Optional: Update window title
+                    stage.show();
+
+                } catch (IOException e) {
+                    System.err.println("Failed to load main menu screen.");
+                    e.printStackTrace();
+                    feedbackLabel.setText("Login successful, but failed to load main menu.");
+                }
+                // +++++++++++++++++++++++++++++++++++++++++++++
+
             } else {
                 feedbackLabel.setText("Sign-in failed: Incorrect password.");
             }
@@ -122,6 +154,7 @@ public class HelloController {
      */
     @FXML
     void handleSignUpAction(ActionEvent event) {
+        // (This method is unchanged)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -130,25 +163,21 @@ public class HelloController {
         String name = signUpNameField.getText();
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
-
-        // +++++++++ GET CONFIRM PASSWORD VALUE +++++++++
         String confirmPassword = signUpConfirmPasswordField.getText();
-        // ++++++++++++++++++++++++++++++++++++++++++++++
-
         String username = signUpUsernameField.getText();
         String age = signUpAgeField.getText();
+        String phone = signUpPhoneField.getText();
 
-        if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || username.isBlank() || age.isBlank()) {
+        if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() ||
+                username.isBlank() || age.isBlank() || phone.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
         }
 
-        // +++++++++ ADD PASSWORD VALIDATION +++++++++
         if (!password.equals(confirmPassword)) {
             feedbackLabel.setText("Passwords do not match. Please try again.");
             return;
         }
-        // +++++++++++++++++++++++++++++++++++++++++++
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
@@ -156,6 +185,7 @@ public class HelloController {
         userData.put("password", password); // WARNING: Hash this in a real app
         userData.put("username", username);
         userData.put("age", age);
+        userData.put("phone", phone);
         userData.put("profilePhotoUrl", null);
 
         try {
@@ -213,6 +243,7 @@ public class HelloController {
 
     @FXML
     void showSignInPane(ActionEvent event) {
+        // (This method is unchanged)
         signInPane.setVisible(true);
         signUpPane.setVisible(false);
         clearSignUpForm();
@@ -220,6 +251,7 @@ public class HelloController {
 
     @FXML
     void showSignUpPane(ActionEvent event) {
+        // (This method is unchanged)
         signUpPane.setVisible(true);
         signInPane.setVisible(false);
     }
@@ -228,16 +260,14 @@ public class HelloController {
      * Helper method to clear all sign-up fields.
      */
     private void clearSignUpForm() {
+        // (This method is unchanged)
         signUpNameField.clear();
         signUpEmailField.clear();
         signUpPasswordField.clear();
-
-        // +++++++++ CLEAR NEW FIELD +++++++++
         signUpConfirmPasswordField.clear();
-        // +++++++++++++++++++++++++++++++++++
-
         signUpUsernameField.clear();
         signUpAgeField.clear();
+        signUpPhoneField.clear();
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
