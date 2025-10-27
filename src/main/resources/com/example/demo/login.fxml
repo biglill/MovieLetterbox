@@ -22,7 +22,6 @@
         <Label styleClass="title-label" text="Welcome Back!" />
         <Label text="Please enter your details to sign in." />
         <Label fx:id="feedbackLabel" styleClass="feedback-label" wrapText="true" />
-
         <VBox spacing="5.0">
             <Label text="Username" />
             <TextField fx:id="signInUsernameField" promptText="Enter your username" styleClass="text-input" />
@@ -71,6 +70,11 @@
         <VBox spacing="5.0">
             <Label text="Password" />
             <PasswordField fx:id="signUpPasswordField" promptText="Choose a strong password" styleClass="text-input" />
+        </VBox>
+
+        <VBox spacing="5.0">
+            <Label text="Confirm Password" />
+            <PasswordField fx:id="signUpConfirmPasswordField" promptText="Confirm your password" styleClass="text-input" />
         </VBox>
         <Button onAction="#handleSignUpAction" styleClass="button" text="Sign Up">
             <VBox.margin>

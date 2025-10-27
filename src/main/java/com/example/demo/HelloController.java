@@ -30,11 +30,8 @@ public class HelloController {
     @FXML
     private Label feedbackLabel;
 
-    // +++++++++ CHANGES START +++++++++
     @FXML
-    private TextField signInUsernameField; // Changed from signInEmailField
-    // +++++++++ CHANGES END +++++++++
-
+    private TextField signInUsernameField;
     @FXML
     private PasswordField signInPasswordField;
 
@@ -48,6 +45,11 @@ public class HelloController {
     private TextField signUpUsernameField;
     @FXML
     private TextField signUpAgeField;
+
+    // +++++++++ NEW FXML VAR +++++++++
+    @FXML
+    private PasswordField signUpConfirmPasswordField;
+    // ++++++++++++++++++++++++++++++++
 
     @FXML
     private ImageView profileImageView;
@@ -65,7 +67,6 @@ public class HelloController {
             e.printStackTrace();
             feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
-        // Load a default "placeholder" image (ensure placeholder.png is in resources/com/example/demo)
         try {
             Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
             profileImageView.setImage(defaultImage);
@@ -79,12 +80,12 @@ public class HelloController {
      */
     @FXML
     void handleSignInAction(ActionEvent event) {
+        // (This method is unchanged from the last step)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
         }
 
-        // +++++++++ CHANGES START +++++++++
         String username = signInUsernameField.getText();
         String password = signInPasswordField.getText();
 
@@ -94,21 +95,17 @@ public class HelloController {
         }
 
         try {
-            // Call the new method
             Map<String, Object> userData = firebaseService.getUserByUsername(username);
 
             if (userData == null) {
                 feedbackLabel.setText("Sign-in failed: User not found.");
                 return;
             }
-            // +++++++++ CHANGES END +++++++++
 
-            // In a real app, this would be a hashed password comparison.
             String storedPassword = (String) userData.get("password");
 
             if (password.equals(storedPassword)) {
                 feedbackLabel.setText("Sign-in successful! Welcome, " + userData.get("name") + ".");
-                // TODO: Add logic to navigate to the main part of your application.
             } else {
                 feedbackLabel.setText("Sign-in failed: Incorrect password.");
             }
@@ -125,7 +122,6 @@ public class HelloController {
      */
     @FXML
     void handleSignUpAction(ActionEvent event) {
-        // (This method is unchanged)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -134,18 +130,30 @@ public class HelloController {
         String name = signUpNameField.getText();
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
+
+        // +++++++++ GET CONFIRM PASSWORD VALUE +++++++++
+        String confirmPassword = signUpConfirmPasswordField.getText();
+        // ++++++++++++++++++++++++++++++++++++++++++++++
+
         String username = signUpUsernameField.getText();
         String age = signUpAgeField.getText();
 
-        if (name.isBlank() || email.isBlank() || password.isBlank() || username.isBlank() || age.isBlank()) {
+        if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() || username.isBlank() || age.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
         }
 
+        // +++++++++ ADD PASSWORD VALIDATION +++++++++
+        if (!password.equals(confirmPassword)) {
+            feedbackLabel.setText("Passwords do not match. Please try again.");
+            return;
+        }
+        // +++++++++++++++++++++++++++++++++++++++++++
+
         Map<String, Object> userData = new HashMap<>();
         userData.put("name", name);
         userData.put("email", email);
-        userData.put("password", password);
+        userData.put("password", password); // WARNING: Hash this in a real app
         userData.put("username", username);
         userData.put("age", age);
         userData.put("profilePhotoUrl", null);
@@ -220,10 +228,14 @@ public class HelloController {
      * Helper method to clear all sign-up fields.
      */
     private void clearSignUpForm() {
-        // (This method is unchanged)
         signUpNameField.clear();
         signUpEmailField.clear();
         signUpPasswordField.clear();
+
+        // +++++++++ CLEAR NEW FIELD +++++++++
+        signUpConfirmPasswordField.clear();
+        // +++++++++++++++++++++++++++++++++++
+
         signUpUsernameField.clear();
         signUpAgeField.clear();
 
@@ -236,7 +248,6 @@ public class HelloController {
         }
         feedbackLabel.setText("");
 
-        // Also clear the sign-in fields
         signInUsernameField.clear();
         signInPasswordField.clear();
     }
