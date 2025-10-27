@@ -112,10 +112,8 @@ public class HelloController {
             if (password.equals(storedPassword)) {
                 // +++ SIGN-IN SUCCESSFUL! LOAD MAIN MENU +++
                 try {
-                    // 1. Load the new FXML file
                     FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("main-menu.fxml"));
-                    // 2. Create the new scene (use your 750x750 size)
-                    Scene scene = new Scene(fxmlLoader.load(), 750, 750);
+                    Scene scene = new Scene(fxmlLoader.load(), 800, 800);
                     scene.getStylesheets().add(HelloApplication.class.getResource("Style.css").toExternalForm());
 
                     // 3. Get the controller for the new scene
