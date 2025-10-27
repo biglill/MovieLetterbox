@@ -36,6 +36,14 @@ public class HelloController {
     @FXML
     private PasswordField signUpPasswordField;
 
+    // +++++++++ NEW FIELDS START +++++++++
+    @FXML
+    private TextField signUpUsernameField;
+    @FXML
+    private TextField signUpAgeField;
+    // +++++++++ NEW FIELDS END +++++++++
+
+
     @FXML
     public void initialize() {
         try {
@@ -108,7 +116,12 @@ public class HelloController {
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
 
-        if (name.isBlank() || email.isBlank() || password.isBlank()) {
+        // +++++++++ GET NEW FIELD VALUES +++++++++
+        String username = signUpUsernameField.getText();
+        String age = signUpAgeField.getText();
+
+        // +++++++++ UPDATE VALIDATION +++++++++
+        if (name.isBlank() || email.isBlank() || password.isBlank() || username.isBlank() || age.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
         }
@@ -118,6 +131,10 @@ public class HelloController {
         userData.put("email", email);
         // WARNING: In a production application, you should ALWAYS hash the password.
         userData.put("password", password);
+
+        // +++++++++ ADD NEW DATA TO MAP +++++++++
+        userData.put("username", username);
+        userData.put("age", age); // Stored as a String. See note below.
 
         try {
             String newUserId = firebaseService.saveUserDetails(userData);
@@ -144,4 +161,3 @@ public class HelloController {
         signInPane.setVisible(false);
     }
 }
-
