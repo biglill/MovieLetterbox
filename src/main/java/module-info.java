@@ -14,6 +14,9 @@ module com.example.demo {
     requires com.google.api.apicommon;
     requires google.cloud.core;
     requires google.cloud.storage; // <-- ADD THIS for Firebase Storage
+    requires java.net.http;
+    requires com.google.gson;
+    requires java.desktop;
 
     // Opens your package to the FXML loader so it can access your controller
     opens com.example.demo to javafx.fxml;
