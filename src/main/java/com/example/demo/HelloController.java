@@ -2,10 +2,8 @@ package com.example.demo;
 
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-// +++ ADD THESE IMPORTS +++
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-// +++++++++++++++++++++++++
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -17,8 +15,6 @@ import javafx.stage.Stage;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class HelloController {
@@ -63,7 +59,6 @@ public class HelloController {
 
     @FXML
     public void initialize() {
-        // (This method is unchanged)
         try {
             firebaseService = new FirebaseService();
             System.out.println("Firebase initialized successfully.");
@@ -81,9 +76,6 @@ public class HelloController {
         }
     }
 
-    /**
-     * Handles the action of clicking the "Sign In" button.
-     */
     @FXML
     void handleSignInAction(ActionEvent event) {
         if (firebaseService == null) {
@@ -100,33 +92,29 @@ public class HelloController {
         }
 
         try {
-            Map<String, Object> userData = firebaseService.getUserByUsername(username);
+            User user = firebaseService.getUserByUsername(username);
 
-            if (userData == null) {
+            if (user == null) {
                 feedbackLabel.setText("Sign-in failed: User not found.");
                 return;
             }
 
-            String storedPassword = (String) userData.get("password");
+            String storedPassword = user.getPassword();
 
             if (password.equals(storedPassword)) {
-                // +++ SIGN-IN SUCCESSFUL! LOAD MAIN MENU +++
                 try {
                     FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("main-menu.fxml"));
                     Scene scene = new Scene(fxmlLoader.load(), 800, 800);
                     scene.getStylesheets().add(HelloApplication.class.getResource("Style.css").toExternalForm());
 
-                    // 3. Get the controller for the new scene
                     MainMenuController controller = fxmlLoader.getController();
-                    // 4. Pass the user's data to the new controller
-                    controller.setUserData(userData);
 
-                    // 5. Get the current stage (the window)
+                    controller.setUserData(user);
+
                     Stage stage = (Stage) signInPane.getScene().getWindow();
 
-                    // 6. Set the new scene on the stage
                     stage.setScene(scene);
-                    stage.setTitle("Main Menu"); // Optional: Update window title
+                    stage.setTitle("Main Menu");
                     stage.show();
 
                 } catch (IOException e) {
@@ -134,7 +122,6 @@ public class HelloController {
                     e.printStackTrace();
                     feedbackLabel.setText("Login successful, but failed to load main menu.");
                 }
-                // +++++++++++++++++++++++++++++++++++++++++++++
 
             } else {
                 feedbackLabel.setText("Sign-in failed: Incorrect password.");
@@ -147,12 +134,8 @@ public class HelloController {
         }
     }
 
-    /**
-     * Handles the action of clicking the "Sign Up" button.
-     */
     @FXML
     void handleSignUpAction(ActionEvent event) {
-        // (This method is unchanged)
         if (firebaseService == null) {
             feedbackLabel.setText("Error: Database service is not available.");
             return;
@@ -177,17 +160,17 @@ public class HelloController {
             return;
         }
 
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("name", name);
-        userData.put("email", email);
-        userData.put("password", password); // WARNING: Hash this in a real app
-        userData.put("username", username);
-        userData.put("age", age);
-        userData.put("phone", phone);
-        userData.put("profilePhotoUrl", null);
+        User newUser = new User();
+        newUser.setName(name);
+        newUser.setEmail(email);
+        newUser.setPassword(password);
+        newUser.setUsername(username);
+        newUser.setAge(age);
+        newUser.setPhone(phone);
+        newUser.setProfilePhotoUrl(null);
 
         try {
-            String newUserId = firebaseService.saveUserDetails(userData);
+            String newUserId = firebaseService.saveUserDetails(newUser);
             System.out.println("Successfully saved user data with ID: " + newUserId);
 
             if (selectedPhotoFile != null) {
@@ -211,12 +194,8 @@ public class HelloController {
         }
     }
 
-    /**
-     * Opens a FileChooser to select a profile photo.
-     */
     @FXML
     void handleChoosePhotoAction(ActionEvent event) {
-        // (This method is unchanged)
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select Profile Photo");
         fileChooser.getExtensionFilters().addAll(
@@ -241,7 +220,6 @@ public class HelloController {
 
     @FXML
     void showSignInPane(ActionEvent event) {
-        // (This method is unchanged)
         signInPane.setVisible(true);
         signUpPane.setVisible(false);
         clearSignUpForm();
@@ -249,16 +227,11 @@ public class HelloController {
 
     @FXML
     void showSignUpPane(ActionEvent event) {
-        // (This method is unchanged)
         signUpPane.setVisible(true);
         signInPane.setVisible(false);
     }
 
-    /**
-     * Helper method to clear all sign-up fields.
-     */
     private void clearSignUpForm() {
-        // (This method is unchanged)
         signUpNameField.clear();
         signUpEmailField.clear();
         signUpPasswordField.clear();
@@ -272,7 +245,6 @@ public class HelloController {
         try {
             profileImageView.setImage(new Image(getClass().getResourceAsStream("placeholder.png")));
         } catch (Exception e) {
-            // placeholder.png not found, do nothing
         }
         feedbackLabel.setText("");
 

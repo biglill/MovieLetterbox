@@ -1,40 +1,21 @@
 package com.example.demo;
 
 public class User {
-    private int userId;           // Primary Key
+    private int userId;
     private String email;
     private String password;
     private String username;
     private String bio;
-    private String profilePic;
+    private String profilePhotoUrl;
     private String registered;
     private String lastLogin;
     private int totalLikes;
 
-    // Constructors
-    public User() {}
+    private String name;
+    private String age;
+    private String phone;
 
-    public User(
-            int userId,
-            String email,
-            String password,
-            String username,
-            String bio,
-            String profilePic,
-            String registered,
-            String lastLogin,
-            int totalLikes
-    ) {
-        this.userId = userId;
-        this.email = email;
-        this.password = password;
-        this.username = username;
-        this.bio = bio;
-        this.profilePic = profilePic;
-        this.registered = registered;
-        this.lastLogin = lastLogin;
-        this.totalLikes = totalLikes;
-    }
+    public User() {}
 
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
@@ -51,8 +32,8 @@ public class User {
     public String getBio() { return bio; }
     public void setBio(String bio) { this.bio = bio; }
 
-    public String getProfilePic() { return profilePic; }
-    public void setProfilePic(String profilePic) { this.profilePic = profilePic; }
+    public String getProfilePhotoUrl() { return profilePhotoUrl; }
+    public void setProfilePhotoUrl(String profilePhotoUrl) { this.profilePhotoUrl = profilePhotoUrl; }
 
     public String getRegistered() { return registered; }
     public void setRegistered(String registered) { this.registered = registered; }
@@ -63,6 +44,15 @@ public class User {
     public int getTotalLikes() { return totalLikes; }
     public void setTotalLikes(int totalLikes) { this.totalLikes = totalLikes; }
 
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getAge() { return age; }
+    public void setAge(String age) { this.age = age; }
+
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+
     @Override
     public String toString() {
         return "User{" +
@@ -70,11 +60,9 @@ public class User {
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", username='" + username + '\'' +
-                ", bio='" + bio + '\'' +
-                ", profilePic='" + profilePic + '\'' +
-                ", registered='" + registered + '\'' +
-                ", lastLogin='" + lastLogin + '\'' +
-                ", totalLikes=" + totalLikes +
+                ", name='" + name + '\'' +
+                ", age='" + age + '\'' +
+                ", phone='" + phone + '\'' +
                 '}';
     }
 }
