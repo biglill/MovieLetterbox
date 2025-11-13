@@ -12,7 +12,9 @@ import com.google.firebase.cloud.FirestoreClient;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -50,10 +52,27 @@ public class FirebaseService {
                 .getService();
     }
 
+    /**
+     * Saves a User object to the 'users' collection.
+     * The User's userId field will be populated with the Firestore Document ID.
+     * @param user The User object to save.
+     * @return The new Document ID.
+     * @throws ExecutionException
+     * @throws InterruptedException
+     */
     public String saveUserDetails(User user) throws ExecutionException, InterruptedException {
+        // 1. Create a document reference with a new auto-generated ID
         DocumentReference docRef = db.collection("users").document();
+
+        // 2. Get that ID and set it on the user object
+        user.setUserId(docRef.getId());
+
+        // 3. Now, save the user object (which includes its own ID)
         ApiFuture<WriteResult> future = docRef.set(user);
+
         System.out.println("User data saved successfully at: " + future.get().getUpdateTime());
+
+        // 4. Return the ID
         return docRef.getId();
     }
 

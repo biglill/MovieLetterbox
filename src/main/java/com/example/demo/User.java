@@ -1,7 +1,8 @@
 package com.example.demo;
 
 public class User {
-    private int userId;
+    // --- MODIFIED: Changed from int to String ---
+    private String userId;
     private String email;
     private String password;
     private String username;
@@ -17,8 +18,9 @@ public class User {
 
     public User() {}
 
-    public int getUserId() { return userId; }
-    public void setUserId(int userId) { this.userId = userId; }
+    // --- MODIFIED: Getter and Setter now use String ---
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -56,7 +58,8 @@ public class User {
     @Override
     public String toString() {
         return "User{" +
-                "userId=" + userId +
+                // --- MODIFIED: Now references a String ---
+                "userId='" + userId + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
                 ", username='" + username + '\'' +
