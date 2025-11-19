@@ -1,4 +1,4 @@
-package com.example.demo;
+package movieLetterbox.service;
 
 import com.google.api.core.ApiFuture;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -8,14 +8,12 @@ import com.google.cloud.storage.Blob;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.cloud.FirestoreClient;
+import movieLetterbox.model.User;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class FirebaseService {

@@ -1,4 +1,4 @@
-package com.example.demo;
+package movieLetterbox.service;
 
 import java.io.IOException;
 import java.net.URI;
@@ -9,8 +9,6 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import javax.print.DocFlavor;
 
 public class OmdbService {
     private static final String URL = "https://www.omdbapi.com/";

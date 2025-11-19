@@ -1,5 +1,7 @@
-package com.example.demo;
+package movieLetterbox.controller;
 
+import movieLetterbox.MainApplication;
+import movieLetterbox.model.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -24,9 +26,9 @@ public class MainMenuController {
     @FXML
     void handleLogoutAction(ActionEvent event) {
         try {
-            FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("login.fxml"));
+            FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("login.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), 750, 750);
-            scene.getStylesheets().add(HelloApplication.class.getResource("Style.css").toExternalForm());
+            scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
 
             Stage stage = (Stage) welcomeLabel.getScene().getWindow();
 

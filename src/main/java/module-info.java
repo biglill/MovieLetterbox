@@ -16,8 +16,14 @@ module com.example.demo {
     requires java.desktop;
 
     // Opens your package to the FXML loader
-    opens com.example.demo to javafx.fxml, google.cloud.firestore;
+    opens movieLetterbox to javafx.fxml, google.cloud.firestore;
 
     // Exports your package so the JavaFX application can launch
-    exports com.example.demo;
+    exports movieLetterbox;
+    exports movieLetterbox.controller;
+    opens movieLetterbox.controller to google.cloud.firestore, javafx.fxml;
+    exports movieLetterbox.model;
+    opens movieLetterbox.model to google.cloud.firestore, javafx.fxml;
+    exports movieLetterbox.service;
+    opens movieLetterbox.service to google.cloud.firestore, javafx.fxml;
 }

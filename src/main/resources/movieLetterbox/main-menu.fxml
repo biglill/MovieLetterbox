@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="com.example.demo.MainMenuController"
+      fx:controller="movieLetterbox.controller.MainMenuController"
       alignment="CENTER" spacing="20.0" styleClass="root"
       stylesheets="@Style.css">
     <padding>

@@ -1,4 +1,4 @@
-package com.example.demo;
+package movieLetterbox.model;
 
 public class Movie {
     private int movieId;

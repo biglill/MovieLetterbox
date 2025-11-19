@@ -1,4 +1,4 @@
-package com.example.demo;
+package movieLetterbox.model;
 
 public class User {
     // --- MODIFIED: Changed from int to String ---

@@ -1,5 +1,8 @@
-package com.example.demo;
+package movieLetterbox.controller;
 
+import movieLetterbox.service.FirebaseService;
+import movieLetterbox.MainApplication;
+import movieLetterbox.model.User;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -103,9 +106,9 @@ public class HelloController {
 
             if (password.equals(storedPassword)) {
                 try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("main-menu.fxml"));
+                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
                     Scene scene = new Scene(fxmlLoader.load(), 800, 800);
-                    scene.getStylesheets().add(HelloApplication.class.getResource("Style.css").toExternalForm());
+                    scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
 
                     MainMenuController controller = fxmlLoader.getController();
 
