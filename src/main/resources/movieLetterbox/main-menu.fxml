@@ -1,24 +1,53 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 
-<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="movieLetterbox.controller.MainMenuController"
-      alignment="CENTER" spacing="20.0" styleClass="root"
-      stylesheets="@Style.css">
-    <padding>
-        <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
-    </padding>
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="movieLetterbox.controller.MainMenuController"
+            stylesheets="@Style.css" styleClass="root">
 
-    <Label styleClass="title-label" text="Main Menu" />
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="header-bar">
+            <padding>
+                <Insets top="20" right="30" bottom="20" left="30"/>
+            </padding>
 
-    <Label fx:id="welcomeLabel" text="Welcome, [User]!" />
+            <Label text="Latest Movies" styleClass="header-title"/>
 
-    <Label text="You are now logged in." />
+            <Region HBox.hgrow="ALWAYS"/>
 
-    <Button fx:id="logoutButton" onAction="#handleLogoutAction" styleClass="button" text="Log Out" />
+            <HBox alignment="CENTER" styleClass="search-container" maxHeight="40">
+                <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                         scaleX="0.7" scaleY="0.7" styleClass="search-icon"/>
+                <TextField fx:id="searchField" promptText="Search...." styleClass="search-input"/>
+            </HBox>
 
-</VBox>
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <HBox alignment="CENTER" spacing="10" onMouseClicked="#handleLogoutAction" styleClass="profile-container">
+                <Label fx:id="welcomeLabel" text="User" styleClass="profile-name"/>
+                <SVGPath content="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+                         scaleX="1.5" scaleY="1.5" styleClass="profile-icon"/>
+            </HBox>
+        </HBox>
+    </top>
+
+    <center>
+        <ScrollPane fitToWidth="true" styleClass="scroll-pane-transparent">
+            <content>
+                <TilePane fx:id="movieGrid" hgap="30" vgap="30" prefColumns="3" alignment="TOP_CENTER" style="-fx-padding: 20;">
+                </TilePane>
+            </content>
+        </ScrollPane>
+    </center>
+</BorderPane>
