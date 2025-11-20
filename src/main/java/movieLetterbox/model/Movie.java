@@ -1,12 +1,14 @@
 package movieLetterbox.model;
 
+import com.google.gson.JsonObject;
+
 public class Movie {
-    private int movieId;
+    private String movieId;
     private String name;
     private int year;
     private String ageRating;
     private String release;
-    private int runtime;
+    private String runtime;
     private String genre;
     private String plot;
     private String language;
@@ -20,12 +22,12 @@ public class Movie {
     public Movie() {}
 
     public Movie(
-            int movieId,
+            String movieId,
             String name,
             int year,
             String ageRating,
             String release,
-            int runtime,
+            String runtime,
             String genre,
             String plot,
             String language,
@@ -53,8 +55,26 @@ public class Movie {
         this.ratingTotal = ratingTotal;
     }
 
-    public int getMovieId() { return movieId; }
-    public void setMovieId(int movieId) { this.movieId = movieId; }
+    public Movie(JsonObject json) {
+        this.movieId = json.get("imdbID").getAsString();
+        this.name = json.get("Title").getAsString();
+        this.year = json.get("Year").getAsInt();
+        this.ageRating = json.get("Rated").getAsString();
+        this.release = json.get("Released").getAsString();
+        this.runtime = json.get("Runtime").getAsString();
+        this.genre = json.get("Genre").getAsString();
+        this.plot = json.get("Plot").getAsString();
+        this.language = json.get("Language").getAsString();
+        this.country = json.get("Country").getAsString();
+        this.rewards = json.get("Awards").getAsString();
+        this.posterPic = json.get("Poster").getAsString();
+        this.favoriteCount = 0;
+        this.ratingCount = 0;
+        this.ratingTotal = 0;
+    }
+
+    public String getMovieId() { return movieId; }
+    public void setMovieId(String movieId) { this.movieId = movieId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -68,8 +88,8 @@ public class Movie {
     public String getRelease() { return release; }
     public void setRelease(String release) { this.release = release; }
 
-    public int getRuntime() { return runtime; }
-    public void setRuntime(int runtime) { this.runtime = runtime; }
+    public String getRuntime() { return runtime; }
+    public void setRuntime(String runtime) { this.runtime = runtime; }
 
     public String getGenre() { return genre; }
     public void setGenre(String genre) { this.genre = genre; }

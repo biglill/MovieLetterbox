@@ -18,8 +18,8 @@ import java.util.concurrent.ExecutionException;
 
 public class FirebaseService {
 
-    private final Firestore db;
-    private final Storage storage;
+    public final Firestore db;
+    public final Storage storage;
 
     private final String BUCKET_NAME = "movieletterbox.firebasestorage.app";
 

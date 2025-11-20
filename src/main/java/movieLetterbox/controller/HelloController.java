@@ -62,15 +62,13 @@ public class HelloController {
 
     @FXML
     public void initialize() {
+        firebaseService = MainApplication.firebaseService;
+
         try {
-            firebaseService = new FirebaseService();
-            System.out.println("Firebase initialized successfully.");
-            // REMOVED: feedbackLabel.setText("Firebase connected.");
-            // The label will now remain empty on load.
-        } catch (IOException e) {
-            System.err.println(e.getMessage());
-            e.printStackTrace();
-            feedbackLabel.setText("Connection Error: Check environment variable setup.");
+            Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
+            profileImageView.setImage(defaultImage);
+        } catch (Exception e) {
+            System.err.println("Warning: placeholder.png not found.");
         }
     }
 
