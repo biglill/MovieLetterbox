@@ -65,16 +65,13 @@ public class HelloController {
         try {
             firebaseService = new FirebaseService();
             System.out.println("Firebase initialized successfully.");
-            feedbackLabel.setText("Firebase connected.");
+            // REMOVED: feedbackLabel.setText("Firebase connected.");
+            // The label will now remain empty on load.
         } catch (IOException e) {
             System.err.println(e.getMessage());
             e.printStackTrace();
             feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
-
-        // REMOVED: The code block that tried to load "placeholder.png"
-        // If you want a default profile image later, add a 'profile_placeholder.png'
-        // to your resources and load it here.
     }
 
     @FXML
@@ -106,14 +103,16 @@ public class HelloController {
                 try {
                     FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
                     Scene scene = new Scene(fxmlLoader.load(), 800, 800);
-                    scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+
+                    // Ensure styles are loaded
+                    if (MainApplication.class.getResource("Style.css") != null) {
+                        scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                    }
 
                     MainMenuController controller = fxmlLoader.getController();
-
                     controller.setUserData(user);
 
                     Stage stage = (Stage) signInPane.getScene().getWindow();
-
                     stage.setScene(scene);
                     stage.setTitle("Main Menu");
                     stage.show();
@@ -243,10 +242,7 @@ public class HelloController {
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
-
-        // CHANGED: Just set to null instead of trying to load the missing file
-        profileImageView.setImage(null);
-
+        profileImageView.setImage(null); // Clears image without looking for placeholder.png
         feedbackLabel.setText("");
 
         signInUsernameField.clear();
