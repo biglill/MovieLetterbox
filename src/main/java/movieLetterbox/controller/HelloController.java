@@ -71,12 +71,10 @@ public class HelloController {
             e.printStackTrace();
             feedbackLabel.setText("Connection Error: Check environment variable setup.");
         }
-        try {
-            Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
-            profileImageView.setImage(defaultImage);
-        } catch (Exception e) {
-            System.err.println("Warning: placeholder.png not found.");
-        }
+
+        // REMOVED: The code block that tried to load "placeholder.png"
+        // If you want a default profile image later, add a 'profile_placeholder.png'
+        // to your resources and load it here.
     }
 
     @FXML
@@ -245,10 +243,10 @@ public class HelloController {
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
-        try {
-            profileImageView.setImage(new Image(getClass().getResourceAsStream("placeholder.png")));
-        } catch (Exception e) {
-        }
+
+        // CHANGED: Just set to null instead of trying to load the missing file
+        profileImageView.setImage(null);
+
         feedbackLabel.setText("");
 
         signInUsernameField.clear();

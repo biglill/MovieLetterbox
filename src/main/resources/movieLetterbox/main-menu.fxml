@@ -4,12 +4,10 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
-<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.TilePane?>
-<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
@@ -22,7 +20,9 @@
                 <Insets top="20" right="30" bottom="20" left="30"/>
             </padding>
 
-            <Label text="Latest Movies" styleClass="header-title"/>
+            <Label text="Latest Movies"
+                   styleClass="header-title"
+                   onMouseClicked="#handleHomeAction"/>
 
             <Region HBox.hgrow="ALWAYS"/>
 

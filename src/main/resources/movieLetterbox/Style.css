@@ -1,13 +1,25 @@
+/* =============================================================================
+   1. GLOBAL & ROOT STYLES
+   ============================================================================= */
 .root {
+    /* Main background color for all screens */
     -fx-background-color: #D6D9E8;
-    -fx-font-family: "Inter", "System";
+    /* Default font for the entire application */
+    -fx-font-family: "Inter", "Segoe UI", "System";
     -fx-font-size: 14px;
-}
-
-.label {
     -fx-text-fill: #333333;
 }
 
+/* Default styling for all labels unless overridden */
+.label {
+    -fx-text-fill: #1A202C;
+}
+
+/* =============================================================================
+   2. TYPOGRAPHY
+   ============================================================================= */
+
+/* Large Titles (Used in Login/Sign Up) */
 .title-label {
     -fx-font-size: 28px;
     -fx-font-weight: bold;
@@ -15,6 +27,50 @@
     -fx-padding: 0 0 10px 0;
 }
 
+/* Dashboard Header Title ("Latest Movies") */
+.header-title {
+    /* CHANGED: Removed Courier New to match the User Name font */
+    -fx-font-family: "Inter", "System";
+    -fx-font-weight: bold;
+    -fx-font-size: 32px;
+    -fx-text-fill: #1A202C;
+    -fx-cursor: hand; /* Indicates clickable (Home button) */
+}
+
+.header-title:hover {
+    -fx-text-fill: #4C51BF; /* Hover effect */
+}
+
+/* Feedback/Error Messages */
+.feedback-label {
+    -fx-text-fill: #E53E3E; /* Red color for errors */
+    -fx-font-size: 12px;
+    -fx-font-style: italic;
+}
+
+/* Movie Titles on Cards */
+.movie-title {
+    -fx-font-family: "Inter", "System";
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1A202C;
+    -fx-alignment: CENTER;
+    -fx-text-alignment: CENTER;
+    -fx-padding: 8 0 0 0;
+}
+
+/* "Average Rating" Label */
+.rating-label {
+    -fx-font-family: "Courier New", monospace;
+    -fx-font-size: 12px;
+    -fx-text-fill: #555555;
+}
+
+/* =============================================================================
+   3. INPUT CONTROLS (TextFields, PasswordFields)
+   ============================================================================= */
+
+/* Standard Text Input (Login/Sign Up) */
 .text-input {
     -fx-background-color: #FFFFFF;
     -fx-background-radius: 8px;
@@ -22,64 +78,168 @@
     -fx-padding: 10px 15px;
     -fx-border-color: #E0E0E0;
     -fx-border-width: 1px;
-    -fx-effect: dropshadow(
-            gaussian,
-            rgba(0, 0, 0, 0.1),
-            5,
-
-            0,
-
-            0,
-
-            2
-    );
+    -fx-prompt-text-fill: #A0AEC0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
 }
 
 .text-input:focused {
-    -fx-border-color: #4C51BF;
+    -fx-border-color: #4C51BF; /* Primary Purple */
     -fx-border-width: 2px;
-    -fx-effect: dropshadow(
-            gaussian,
-            rgba(76, 81, 191, 0.4),
-            8,
-            0,
-            0,
-            2
-    );
+    -fx-effect: dropshadow(gaussian, rgba(76, 81, 191, 0.2), 8, 0, 0, 2);
 }
 
+/* Search Bar Specifics (Matches Text Input Style now) */
+.search-container {
+    -fx-background-color: #FFFFFF;
+
+    /* CHANGED: Updated radius and border to match .text-input style */
+    -fx-background-radius: 8px;
+    -fx-border-radius: 8px;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1px;
+
+    -fx-padding: 0 15px;
+    /* CHANGED: Updated shadow to match .text-input style */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
+    -fx-min-width: 300px;
+}
+
+.search-input {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 10px;
+    -fx-font-size: 16px;
+    -fx-effect: none; /* Remove default shadow */
+}
+
+.search-input:focused {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-effect: none;
+}
+
+.search-icon {
+    -fx-fill: #718096;
+}
+
+/* =============================================================================
+   4. BUTTONS & LINKS
+   ============================================================================= */
+
 .button {
-    -fx-background-color: #4C51BF;
+    -fx-background-color: #4C51BF; /* Primary Brand Color */
     -fx-text-fill: #FFFFFF;
     -fx-font-weight: bold;
+    -fx-font-size: 14px;
     -fx-padding: 12px 25px;
     -fx-background-radius: 8px;
     -fx-cursor: hand;
-    -fx-effect: dropshadow(
-            gaussian,
-            rgba(0, 0, 0, 0.2),
-            5,
-            0,
-            0,
-            2
-    );
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
 }
 
 .button:hover {
-    -fx-background-color: #646AF1;
-    -fx-scale-y: 1.01;
-    -fx-scale-x: 1.01;
+    -fx-background-color: #646AF1; /* Lighter purple on hover */
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
 }
 
 .button:pressed {
-    -fx-background-color: #383B89;
+    -fx-background-color: #383B89; /* Darker purple on click */
     -fx-translate-y: 1;
     -fx-effect: none;
 }
 
+.hyperlink {
+    -fx-text-fill: #4C51BF;
+    -fx-underline: false;
+    -fx-font-weight: bold;
+}
+
+.hyperlink:hover {
+    -fx-underline: true;
+}
+
+/* =============================================================================
+   5. CARD & LIST ELEMENTS
+   ============================================================================= */
+
+/* Transparent ScrollPane for the Grid */
+.scroll-pane-transparent {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+}
+.scroll-pane-transparent > .viewport {
+    -fx-background-color: transparent;
+}
+
+/* Movie Card Container */
+.movie-card {
+    -fx-alignment: TOP_CENTER;
+    -fx-spacing: 5;
+    -fx-cursor: hand;
+    -fx-padding: 10;
+    -fx-background-color: transparent;
+    -fx-background-radius: 10;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+/* Hover effect for entire card */
+.movie-card:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.4); /* Subtle highlight */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);
+}
+
+.movie-poster {
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 10, 0, 0, 5);
+    -fx-background-radius: 4;
+}
+
+
+/* =============================================================================
+   6. MISCELLANEOUS
+   ============================================================================= */
+
+/* Profile Picture Styling */
 .profile-image-view {
-    -fx-border-color: #E0E0E0;
-    -fx-border-width: 2px;
-    -fx-border-radius: 50;
-    -fx-background-color: #FFFFFF;
+    -fx-border-color: #FFFFFF;
+    -fx-border-width: 3px;
+    -fx-border-radius: 50%;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 8, 0, 0, 2);
+    -fx-background-color: #EDF2F7;
+}
+
+.profile-container {
+    -fx-cursor: hand;
+    -fx-padding: 5;
+    -fx-background-radius: 8;
+}
+
+.profile-container:hover {
+    -fx-background-color: rgba(255,255,255,0.5);
+}
+
+.profile-name {
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-text-fill: #2D3748;
+}
+
+/* Star Ratings */
+.star-container {
+    -fx-alignment: CENTER;
+    -fx-spacing: 3;
+    -fx-padding: 5 0 0 0;
+}
+
+.star-filled {
+    -fx-fill: #F6E05E; /* Bright Yellow */
+    -fx-stroke: #D69E2E; /* Darker border */
+    -fx-stroke-width: 1;
+}
+
+.star-empty {
+    -fx-fill: #FFFFFF;
+    -fx-stroke: #A0AEC0;
+    -fx-stroke-width: 1;
 }
