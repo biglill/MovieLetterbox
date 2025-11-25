@@ -1,14 +1,82 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="$CONTROLLER_NAME$"
-            prefHeight="400.0" prefWidth="600.0" >
+<ScrollPane fitToWidth="true" styleClass="root" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.MovieDetailsController">
+    <content>
+        <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="movie-details-container">
+            <padding>
+                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+            </padding>
 
-</AnchorPane>
+            <AnchorPane maxWidth="900.0">
+                <Label fx:id="movieTitleLabel" alignment="CENTER" text="Movie Title Placeholder" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" styleClass="movie-details-title" wrapText="true" />
+                <Button onAction="#handleReturnAction" text="Return" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" styleClass="return-button"/>
+            </AnchorPane>
+
+            <HBox alignment="TOP_CENTER" maxWidth="900.0" spacing="40.0">
+
+                <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="left-column">
+                    <ImageView fx:id="posterImageView" fitHeight="400.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true" styleClass="details-poster" />
+
+                    <VBox alignment="CENTER" spacing="10.0">
+                        <Label text="Rate" styleClass="section-header-small" />
+                        <HBox fx:id="ratingStarContainer" alignment="CENTER" spacing="5.0" styleClass="star-container-large">
+                            <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" onMouseClicked="#handleSetRating" styleClass="star-empty, star-interactive" />
+                            <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" onMouseClicked="#handleSetRating" styleClass="star-empty, star-interactive" />
+                            <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" onMouseClicked="#handleSetRating" styleClass="star-empty, star-interactive" />
+                            <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" onMouseClicked="#handleSetRating" styleClass="star-empty, star-interactive" />
+                            <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" onMouseClicked="#handleSetRating" styleClass="star-empty, star-interactive" />
+                        </HBox>
+                    </VBox>
+
+                    <VBox spacing="10.0" styleClass="content-box">
+                        <Label text="Leave a Review" styleClass="section-header-small"/>
+                        <TextArea fx:id="userReviewArea" prefHeight="100.0" promptText="Write your thoughts here..." wrapText="true" styleClass="review-input-area"/>
+                        <Button maxWidth="Infinity" text="Submit Review" onAction="#handleSubmitReviewAction" styleClass="button"/>
+                    </VBox>
+
+                </VBox>
+
+                <VBox spacing="25.0" styleClass="right-column" HBox.hgrow="ALWAYS">
+
+                    <VBox spacing="10.0" alignment="TOP_CENTER">
+                        <Label text="Description" styleClass="section-header" />
+                        <VBox styleClass="content-box">
+                            <Label fx:id="descriptionLabel" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." wrapText="true" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox spacing="15.0" alignment="TOP_CENTER">
+                        <Label text="Reviews" styleClass="section-header" />
+                        <VBox styleClass="content-box">
+                            <Label text="&quot;A thrilling experience from start to finish. The visuals were stunning.&quot;" wrapText="true" styleClass="review-text"/>
+                            <Label text="- User123" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox styleClass="content-box">
+                            <Label text="&quot;I didn't expect the plot twist at the end. Definitely worth watching.&quot;" wrapText="true" styleClass="review-text"/>
+                            <Label text="- MovieBuff99" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox styleClass="content-box">
+                            <Label text="&quot;The pacing was a bit slow in the middle, but the climax made up for it.&quot;" wrapText="true" styleClass="review-text"/>
+                            <Label text="- Critic_01" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
+                        </VBox>
+                        <VBox styleClass="content-box">
+                            <Label text="&quot;An absolute masterpiece. Highly recommend.&quot;" wrapText="true" styleClass="review-text"/>
+                            <Label text="- CinemaLover" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
+                        </VBox>
+                    </VBox>
+                </VBox>
+            </HBox>
+        </VBox>
+    </content>
+</ScrollPane>

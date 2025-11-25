@@ -7,6 +7,7 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.shape.Circle;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
@@ -29,6 +30,8 @@ public class MainMenuController {
     @FXML private Label welcomeLabel;
     @FXML private TextField searchField;
     @FXML private TilePane movieGrid;
+    @FXML private ImageView userProfileImage;
+    @FXML private SVGPath defaultProfileIcon;
 
     private User user;
     private final OmdbService omdbService = new OmdbService();
@@ -50,6 +53,30 @@ public class MainMenuController {
         this.user = user;
         if (user != null) {
             welcomeLabel.setText(user.getUsername());
+
+            // Check if user has a profile photo URL
+            if (user.getProfilePhotoUrl() != null && !user.getProfilePhotoUrl().isBlank()) {
+                // Load Image
+                Image image = new Image(user.getProfilePhotoUrl(), true); // true = load in background
+                userProfileImage.setImage(image);
+
+                // Make image circular
+                // Assuming 40x40 size, radius is 20, center is 20,20
+                Circle clip = new Circle(20, 20, 20);
+                userProfileImage.setClip(clip);
+
+                // Show Image, Hide Icon
+                userProfileImage.setVisible(true);
+                userProfileImage.setManaged(true);
+                defaultProfileIcon.setVisible(false);
+                defaultProfileIcon.setManaged(false);
+            } else {
+                // No photo: Show Icon, Hide Image
+                userProfileImage.setVisible(false);
+                userProfileImage.setManaged(false);
+                defaultProfileIcon.setVisible(true);
+                defaultProfileIcon.setManaged(true);
+            }
         }
         loadDashboardMovies();
     }

@@ -14,6 +14,8 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
+<!-- Full Name, Age, and Phone Number have been commented -->
+
 <StackPane stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.HelloController">
 
     <VBox fx:id="signInPane" alignment="CENTER" maxWidth="400" spacing="15.0" styleClass="root">
@@ -44,12 +46,21 @@
         </padding>
         <Label styleClass="title-label" text="Create an Account" />
 
-        <ImageView fx:id="profileImageView" fitHeight="100" fitWidth="100" pickOnBounds="true" preserveRatio="true" styleClass="profile-image-view">
-            <clip>
-                <Circle centerX="50" centerY="50" radius="50" />
-            </clip>
-        </ImageView>
-        <Button onAction="#handleChoosePhotoAction" styleClass="button" text="Choose Profile Photo" />
+        <Label text="Profile Photo" style="-fx-font-weight: bold;"/>
+
+        <StackPane fx:id="imageCropContainer" maxWidth="100" maxHeight="100" style="-fx-border-color: #ccc; -fx-border-radius: 50%; -fx-cursor: move;">
+            <shape>
+                <Circle radius="50" />
+            </shape>
+            <ImageView fx:id="profileImageView" fitHeight="100" fitWidth="100" preserveRatio="true" pickOnBounds="true" />
+        </StackPane>
+
+        <VBox alignment="CENTER" spacing="5" maxWidth="200">
+            <Label text="Zoom &amp; Drag to Adjust" style="-fx-font-size: 10px; -fx-text-fill: #666;"/>
+            <javafx.scene.control.Slider fx:id="zoomSlider" min="1" max="3" value="1" blockIncrement="0.1" disable="true"/>
+        </VBox>
+
+        <Button onAction="#handleChoosePhotoAction" styleClass="button" text="Choose Image" />
         <Label fx:id="profilePhotoLabel" styleClass="feedback-label" text="No photo selected." />
 
         <HBox spacing="15.0">

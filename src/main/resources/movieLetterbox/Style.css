@@ -243,3 +243,9 @@
     -fx-stroke: #A0AEC0;
     -fx-stroke-width: 1;
 }
+
+/* Header Profile Image */
+.header-profile-image {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);
+    -fx-cursor: hand;
+}

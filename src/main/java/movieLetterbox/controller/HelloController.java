@@ -16,6 +16,15 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
+// --- NEW IMPORTS FOR CROP & ZOOM ---
+import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Slider;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
+import javafx.scene.shape.Circle;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -55,19 +64,61 @@ public class HelloController {
     @FXML
     private PasswordField signUpConfirmPasswordField;
 
-    @FXML
-    private ImageView profileImageView;
-    @FXML
-    private Label profilePhotoLabel;
+    // --- UPDATED FXML FIELDS ---
+    @FXML private ImageView profileImageView;
+    @FXML private Label profilePhotoLabel;
+
+    // New container for the circle crop
+    @FXML private StackPane imageCropContainer;
+    // New slider for zooming
+    @FXML private Slider zoomSlider;
+
+    // Variables for dragging (panning) logic
+    private double startX, startY;
+    private double initialTranslateX, initialTranslateY;
 
     @FXML
     public void initialize() {
         firebaseService = MainApplication.firebaseService;
 
+        // --- 1. SETUP CIRCULAR CROP ---
+        // Clip the container to a Circle so anything dragged outside is hidden
+        if (imageCropContainer != null) {
+            Circle clip = new Circle(50);
+            clip.setCenterX(50);
+            clip.setCenterY(50);
+            imageCropContainer.setClip(clip);
+
+            // --- 2. SETUP DRAG (PAN) LOGIC ---
+            imageCropContainer.setOnMousePressed(e -> {
+                startX = e.getSceneX();
+                startY = e.getSceneY();
+                initialTranslateX = profileImageView.getTranslateX();
+                initialTranslateY = profileImageView.getTranslateY();
+            });
+
+            imageCropContainer.setOnMouseDragged(e -> {
+                double deltaX = e.getSceneX() - startX;
+                double deltaY = e.getSceneY() - startY;
+                profileImageView.setTranslateX(initialTranslateX + deltaX);
+                profileImageView.setTranslateY(initialTranslateY + deltaY);
+            });
+        }
+
+        // --- 3. SETUP ZOOM LOGIC ---
+        if (zoomSlider != null) {
+            zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
+                profileImageView.setScaleX(newVal.doubleValue());
+                profileImageView.setScaleY(newVal.doubleValue());
+            });
+        }
+
+        // Try to load placeholder
         try {
             Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
             profileImageView.setImage(defaultImage);
         } catch (Exception e) {
+            // Ignore if missing
             System.err.println("Warning: placeholder.png not found.");
         }
     }
@@ -168,13 +219,30 @@ public class HelloController {
         newUser.setProfilePhotoUrl(null);
 
         try {
+            // 1. Create the user document first to get the ID
             String newUserId = firebaseService.saveUserDetails(newUser);
             System.out.println("Successfully saved user data with ID: " + newUserId);
 
-            if (selectedPhotoFile != null) {
+            // 2. Upload the Photo (Cropped Version)
+            if (profileImageView.getImage() != null && selectedPhotoFile != null) {
                 try {
-                    firebaseService.uploadProfilePhoto(selectedPhotoFile, newUserId);
+                    // --- CAPTURE THE CROP ---
+                    // Take a snapshot of the StackPane (which has the Circle clip)
+                    SnapshotParameters params = new SnapshotParameters();
+                    params.setFill(Color.TRANSPARENT); // Keeps the background transparent outside the circle
+                    var croppedImage = imageCropContainer.snapshot(params, null);
+
+                    // Save snapshot to a temporary file
+                    File tempFile = File.createTempFile("profile_crop", ".png");
+                    ImageIO.write(SwingFXUtils.fromFXImage(croppedImage, null), "png", tempFile);
+
+                    // Upload this temp file instead of the original
+                    firebaseService.uploadProfilePhoto(tempFile, newUserId);
                     System.out.println("Photo uploaded and linked successfully.");
+
+                    // Clean up
+                    tempFile.delete();
+
                 } catch (Exception e) {
                     System.err.println("Error uploading photo: " + e.getMessage());
                     e.printStackTrace();
@@ -205,10 +273,23 @@ public class HelloController {
 
         if (file != null) {
             try {
+                // --- RESET ADJUSTMENTS FOR NEW PHOTO ---
+                profileImageView.setTranslateX(0);
+                profileImageView.setTranslateY(0);
+                profileImageView.setScaleX(1);
+                profileImageView.setScaleY(1);
+
+                if (zoomSlider != null) {
+                    zoomSlider.setValue(1);
+                    zoomSlider.setDisable(false);
+                }
+
                 selectedPhotoFile = file;
                 profilePhotoLabel.setText(file.getName());
+
                 Image image = new Image(file.toURI().toString());
                 profileImageView.setImage(image);
+
             } catch (Exception e) {
                 System.err.println("Error loading image preview: " + e.getMessage());
                 profilePhotoLabel.setText("Error: Could not load image.");
@@ -240,7 +321,18 @@ public class HelloController {
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
-        profileImageView.setImage(null); // Clears image without looking for placeholder.png
+        profileImageView.setImage(null);
+
+        // Reset crop/zoom UI
+        profileImageView.setTranslateX(0);
+        profileImageView.setTranslateY(0);
+        profileImageView.setScaleX(1);
+        profileImageView.setScaleY(1);
+        if (zoomSlider != null) {
+            zoomSlider.setValue(1);
+            zoomSlider.setDisable(true);
+        }
+
         feedbackLabel.setText("");
 
         signInUsernameField.clear();
