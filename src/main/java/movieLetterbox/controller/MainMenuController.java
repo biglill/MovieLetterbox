@@ -145,12 +145,18 @@ public class MainMenuController {
                 } catch (NumberFormatException e) {
                 }
             }
-            VBox card = createMovieCard(title, posterUrl, rating);
+
+            String movieId = "";
+            if (movieData.has("imdbID")) {
+                movieId = movieData.get("imdbID").getAsString();
+            }
+
+            VBox card = createMovieCard(movieId, title, posterUrl, rating);
             movieGrid.getChildren().add(card);
         }
     }
 
-    private VBox createMovieCard(String title, String posterUrl, int rating) {
+    private VBox createMovieCard(String movieId, String title, String posterUrl, int rating) {
         VBox card = new VBox();
         card.getStyleClass().add("movie-card");
         Image image;
@@ -191,7 +197,31 @@ public class MainMenuController {
             stars.getChildren().add(star);
         }
         card.getChildren().addAll(poster, titleLabel, ratingText, stars);
-        card.setOnMouseClicked(e -> System.out.println("Clicked on: " + title));
+
+        card.setOnMouseClicked(e -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("movie-details.fxml"));
+                Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+
+                if (MainApplication.class.getResource("Style.css") != null) {
+                    scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                }
+
+                MovieDetailsController controller = fxmlLoader.getController();
+                controller.setMovieData(movieId);
+                // --- FIX: Pass the current user to the details controller ---
+                controller.setUserData(this.user);
+
+                Stage stage = (Stage) welcomeLabel.getScene().getWindow();
+                stage.setScene(scene);
+                stage.setTitle(title + " - Details");
+                stage.show();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                System.err.println("Failed to load movie details screen.");
+            }
+        });
+
         return card;
     }
 
@@ -199,7 +229,6 @@ public class MainMenuController {
     void handleProfileViewAction(MouseEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
-            // Use constants from MainApplication
             Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
 
             if (MainApplication.class.getResource("Style.css") != null) {
@@ -207,7 +236,7 @@ public class MainMenuController {
             }
 
             ProfileController controller = fxmlLoader.getController();
-            controller.setUserData(this.user); // Pass the current user data to the profile screen
+            controller.setUserData(this.user);
 
             Stage stage = (Stage) welcomeLabel.getScene().getWindow();
             stage.setScene(scene);
@@ -218,7 +247,6 @@ public class MainMenuController {
         }
     }
 
-    // Kept for backward compatibility if FXML still references this name
     @FXML
     void handleLogoutAction(MouseEvent event) {
         handleProfileViewAction(event);

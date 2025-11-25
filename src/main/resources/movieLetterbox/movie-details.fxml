@@ -11,16 +11,22 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<ScrollPane fitToWidth="true" styleClass="root" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.MovieDetailsController">
+<!--
+    Updated:
+    1. Added fitToHeight="true" so the background fills the screen.
+    2. Changed styleClass to "scroll-pane-transparent" (from Style.css) to remove the default grey root background.
+-->
+<ScrollPane fitToWidth="true" fitToHeight="true" styleClass="scroll-pane-transparent" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.MovieDetailsController">
     <content>
-        <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="movie-details-container">
+        <!-- Updated: Applied the specific background color here -->
+        <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="root">
             <padding>
                 <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
             </padding>
 
             <AnchorPane maxWidth="900.0">
                 <Label fx:id="movieTitleLabel" alignment="CENTER" text="Movie Title Placeholder" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" styleClass="movie-details-title" wrapText="true" />
-                <Button onAction="#handleReturnAction" text="Return" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" styleClass="return-button"/>
+                <Button onAction="#handleReturnAction" text="Return" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" styleClass="button-return"/>
             </AnchorPane>
 
             <HBox alignment="TOP_CENTER" maxWidth="900.0" spacing="40.0">
