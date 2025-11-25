@@ -9,7 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextArea; // Imported TextArea
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -125,7 +125,8 @@ public class HelloController {
             if (password.equals(storedPassword)) {
                 try {
                     FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
-                    Scene scene = new Scene(fxmlLoader.load(), 800, 800);
+                    // Use constants from MainApplication
+                    Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
 
                     if (MainApplication.class.getResource("Style.css") != null) {
                         scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());

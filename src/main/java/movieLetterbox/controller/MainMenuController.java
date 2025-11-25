@@ -195,12 +195,13 @@ public class MainMenuController {
         return card;
     }
 
-    // CHANGED: Renamed from handleLogoutAction to handleProfileViewAction
     @FXML
-    void handleLogoutAction(MouseEvent event) {
+    void handleProfileViewAction(MouseEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 800, 800);
+            // Use constants from MainApplication
+            Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+
             if (MainApplication.class.getResource("Style.css") != null) {
                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
             }
@@ -215,5 +216,11 @@ public class MainMenuController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // Kept for backward compatibility if FXML still references this name
+    @FXML
+    void handleLogoutAction(MouseEvent event) {
+        handleProfileViewAction(event);
     }
 }

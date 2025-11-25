@@ -1,4 +1,3 @@
-
 package movieLetterbox.controller;
 
 import javafx.embed.swing.SwingFXUtils;
@@ -153,7 +152,9 @@ public class ProfileController {
     void handleBackAction(ActionEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
-            Scene scene = new Scene(fxmlLoader.load(), 800, 800);
+            // Use constants from MainApplication
+            Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+
             if (MainApplication.class.getResource("Style.css") != null) {
                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
             }

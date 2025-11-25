@@ -19,6 +19,10 @@ public class MainApplication extends Application {
     public static OmdbService omdbService;
     public static MovieService movieService;
 
+    // Defined constants for uniform window size across the application
+    public static final int WINDOW_WIDTH = 1200;
+    public static final int WINDOW_HEIGHT = 800;
+
     private boolean firebaseInit () throws IOException {
         try {
             firebaseService = new FirebaseService();
@@ -44,13 +48,12 @@ public class MainApplication extends Application {
         movieService = new MovieService();
 
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("login.fxml"));
-        Scene scene = new Scene(fxmlLoader.load(), 800, 800);
+        // Use constants for size
+        Scene scene = new Scene(fxmlLoader.load(), WINDOW_WIDTH, WINDOW_HEIGHT);
         scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
         stage.setTitle("MovieLetterbox");
         stage.setScene(scene);
         stage.show();
-
-        movieService.CreateMovie("tt6718170");
 
     }
 }

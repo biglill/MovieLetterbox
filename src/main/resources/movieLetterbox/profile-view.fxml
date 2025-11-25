@@ -133,7 +133,7 @@
          VIEW 2: EDIT PROFILE FORM (HIDDEN INITIALLY)
          Contains the form fields to update info
          ================================================================================== -->
-    <VBox fx:id="editProfilePane" visible="false" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.95);">
+    <VBox fx:id="editProfilePane" visible="false" alignment="CENTER" style="-fx-background-color: rgba(0,0,0,0.5);">
 
         <VBox alignment="CENTER" maxWidth="500" spacing="15" style="-fx-padding: 30; -fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
             <Label text="Edit Profile Details" styleClass="title-label" style="-fx-font-size: 20px;"/>
