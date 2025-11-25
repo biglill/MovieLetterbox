@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.SVGPath?>
+<?import javafx.scene.layout.Region?>
+
+<StackPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="movieLetterbox.controller.ProfileController"
+           stylesheets="@Style.css" styleClass="root">
+
+    <!-- ==================================================================================
+         VIEW 1: PROFILE PAGE (READ ONLY)
+         Matches the design: Header with circular img, Sections for Favorites/Posts
+         ================================================================================== -->
+    <ScrollPane fx:id="profileViewPane" fitToWidth="true" styleClass="scroll-pane-transparent">
+        <content>
+            <VBox spacing="30" style="-fx-padding: 40 60;">
+
+                <!-- Top Bar: Return Button -->
+                <HBox alignment="TOP_RIGHT">
+                    <Button text="Return" onAction="#handleBackAction" styleClass="button-return"/>
+                </HBox>
+
+                <!-- Profile Header -->
+                <HBox spacing="30" alignment="CENTER_LEFT">
+                    <!-- Large Circular Profile Image -->
+                    <StackPane>
+                        <Circle radius="60" fill="white" stroke="black" strokeWidth="2"/>
+                        <ImageView fx:id="viewProfileImage" fitHeight="120" fitWidth="120" preserveRatio="true">
+                            <clip>
+                                <Circle centerX="60" centerY="60" radius="60"/>
+                            </clip>
+                        </ImageView>
+                    </StackPane>
+
+                    <VBox spacing="10" alignment="CENTER_LEFT">
+                        <HBox spacing="15" alignment="CENTER_LEFT">
+                            <Label fx:id="viewUsernameLabel" text="UserName" styleClass="profile-page-username"/>
+                            <Button text="Edit Profile" onAction="#handleEditProfileAction" styleClass="button-edit-profile"/>
+                        </HBox>
+                        <Label fx:id="viewBioLabel" text="Bio:" styleClass="profile-page-bio"/>
+                    </VBox>
+                </HBox>
+
+                <!-- Section: Favorite Films -->
+                <VBox spacing="15">
+                    <Label text="Favorite Films" styleClass="section-header"/>
+                    <HBox spacing="20">
+                        <!-- Placeholders mimicking the movie posters -->
+                        <VBox styleClass="poster-placeholder" prefWidth="100" prefHeight="150" alignment="CENTER">
+                            <Label text="Superman" textFill="white" wrapText="true"/>
+                        </VBox>
+                        <VBox styleClass="poster-placeholder" prefWidth="100" prefHeight="150" alignment="CENTER">
+                            <Label text="Interstellar" textFill="white" wrapText="true"/>
+                        </VBox>
+                        <VBox styleClass="poster-placeholder" prefWidth="100" prefHeight="150" alignment="CENTER">
+                            <Label text="Tenet" textFill="white" wrapText="true"/>
+                        </VBox>
+                        <VBox styleClass="poster-placeholder" prefWidth="100" prefHeight="150" alignment="CENTER">
+                            <Label text="Good Will Hunting" textFill="white" wrapText="true"/>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+                <!-- Section: Recent Posts -->
+                <VBox spacing="15">
+                    <Label text="Recent Posts" styleClass="section-header"/>
+
+                    <HBox spacing="40">
+                        <!-- Review 1 -->
+                        <HBox spacing="15" styleClass="review-card">
+                            <VBox styleClass="poster-placeholder" prefWidth="80" prefHeight="120" alignment="CENTER">
+                                <Label text="Superman" textFill="white" style="-fx-font-size: 10px;"/>
+                            </VBox>
+                            <VBox spacing="5" alignment="CENTER_LEFT">
+                                <HBox spacing="10" alignment="BASELINE_LEFT">
+                                    <Label text="Superman" styleClass="review-movie-title" style="-fx-font-weight: bold;"/>
+                                    <Label text="2025" styleClass="review-movie-title"/>
+                                </HBox>
+                                <!-- Static 4 Stars -->
+                                <HBox spacing="2">
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-empty"/>
+                                </HBox>
+                                <Label text="&quot;Just like the Comics&quot;" styleClass="review-comment"/>
+                            </VBox>
+                        </HBox>
+
+                        <!-- Review 2 -->
+                        <HBox spacing="15" styleClass="review-card">
+                            <VBox styleClass="poster-placeholder" prefWidth="80" prefHeight="120" alignment="CENTER">
+                                <Label text="Pulp Fiction" textFill="white" style="-fx-font-size: 10px;"/>
+                            </VBox>
+                            <VBox spacing="5" alignment="CENTER_LEFT">
+                                <HBox spacing="10" alignment="BASELINE_LEFT">
+                                    <Label text="Pulp Fiction" styleClass="review-movie-title" style="-fx-font-weight: bold;"/>
+                                    <Label text="1994" styleClass="review-movie-title"/>
+                                </HBox>
+                                <!-- Static 4.5 Stars -->
+                                <HBox spacing="2">
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                    <SVGPath content="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" scaleX="0.6" scaleY="0.6" styleClass="star-filled"/>
+                                </HBox>
+                                <Label text="&quot;Sam Jackson has hair!!!&quot;" styleClass="review-comment"/>
+                            </VBox>
+                        </HBox>
+                    </HBox>
+                </VBox>
+
+            </VBox>
+        </content>
+    </ScrollPane>
+
+    <!-- ==================================================================================
+         VIEW 2: EDIT PROFILE FORM (HIDDEN INITIALLY)
+         Contains the form fields to update info
+         ================================================================================== -->
+    <VBox fx:id="editProfilePane" visible="false" alignment="CENTER" style="-fx-background-color: rgba(255,255,255,0.95);">
+
+        <VBox alignment="CENTER" maxWidth="500" spacing="15" style="-fx-padding: 30; -fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+            <Label text="Edit Profile Details" styleClass="title-label" style="-fx-font-size: 20px;"/>
+            <Label fx:id="statusLabel" styleClass="feedback-label" />
+
+            <!-- Profile Photo Section with Zoom & Pan -->
+            <VBox alignment="CENTER" spacing="10">
+                <StackPane fx:id="imageCropContainer" maxWidth="100" maxHeight="100" styleClass="profile-image-view" style="-fx-cursor: hand;">
+                    <ImageView fx:id="profileImageView" fitHeight="100" fitWidth="100" preserveRatio="true" pickOnBounds="true">
+                        <!-- Clip will be set in code now for consistency with crop logic -->
+                    </ImageView>
+                </StackPane>
+
+                <VBox alignment="CENTER" spacing="5.0" maxWidth="200">
+                    <Label text="Zoom &amp; Drag" style="-fx-font-size: 10px; -fx-text-fill: #666;"/>
+                    <Slider fx:id="zoomSlider" min="1" max="3" value="1" blockIncrement="0.1" disable="true"/>
+                </VBox>
+
+                <Button text="Change Photo" onAction="#handleChangePhotoAction" styleClass="button-small"/>
+            </VBox>
+
+            <!-- Form Fields -->
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="400">
+                <Label text="Username" style="-fx-font-weight: bold;"/>
+                <TextField fx:id="usernameField" styleClass="text-input"/>
+            </VBox>
+
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="400">
+                <Label text="Bio" style="-fx-font-weight: bold;"/>
+                <TextArea fx:id="bioArea" prefRowCount="3" wrapText="true" styleClass="text-input"/>
+            </VBox>
+
+            <!-- Removed password field from here and replaced with a button -->
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="400">
+                <Label text="Password" style="-fx-font-weight: bold;"/>
+                <Button text="Change Password" onAction="#handleChangePasswordAction" styleClass="button-small"/>
+            </VBox>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button text="Cancel" onAction="#handleCancelEditAction" styleClass="button-secondary"/>
+                <Button text="Save Changes" onAction="#handleSaveAction" styleClass="button"/>
+            </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- ==================================================================================
+         VIEW 3: CHANGE PASSWORD FORM (HIDDEN INITIALLY)
+         ================================================================================== -->
+    <VBox fx:id="changePasswordPane" visible="false" alignment="CENTER" style="-fx-background-color: rgba(0,0,0,0.5);">
+        <VBox alignment="CENTER" maxWidth="400" spacing="15" style="-fx-padding: 30; -fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+            <Label text="Change Password" styleClass="title-label" style="-fx-font-size: 20px;"/>
+            <Label fx:id="passwordStatusLabel" styleClass="feedback-label" />
+
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="350">
+                <Label text="Current Password" style="-fx-font-weight: bold;"/>
+                <PasswordField fx:id="currentPasswordField" styleClass="text-input"/>
+            </VBox>
+
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="350">
+                <Label text="New Password" style="-fx-font-weight: bold;"/>
+                <PasswordField fx:id="newPasswordField" styleClass="text-input"/>
+            </VBox>
+
+            <VBox spacing="5" alignment="CENTER_LEFT" maxWidth="350">
+                <Label text="Confirm New Password" style="-fx-font-weight: bold;"/>
+                <PasswordField fx:id="confirmNewPasswordField" styleClass="text-input"/>
+            </VBox>
+
+            <HBox spacing="10" alignment="CENTER">
+                <Button text="Cancel" onAction="#handleCancelPasswordAction" styleClass="button-secondary"/>
+                <Button text="Update Password" onAction="#handleUpdatePasswordAction" styleClass="button"/>
+            </HBox>
+        </VBox>
+    </VBox>
+
+</StackPane>

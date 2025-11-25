@@ -1,113 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.net.URL?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Hyperlink?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextArea?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.text.Font?>
-
-<!-- Full Name, Age, and Phone Number have been commented -->
 
 <StackPane stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.HelloController">
 
+    <!-- SIGN IN PANE -->
     <VBox fx:id="signInPane" alignment="CENTER" maxWidth="400" spacing="15.0" styleClass="root">
         <padding>
             <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
         </padding>
         <Label styleClass="title-label" text="Welcome Back!" />
-        <Label text="Please enter your details to sign in." />
+        <Label text="Please enter your details to sign in." styleClass="text-normal"/>
         <Label fx:id="feedbackLabel" styleClass="feedback-label" wrapText="true" />
+
         <VBox spacing="5.0">
-            <Label text="Username" />
+            <Label text="Username" styleClass="label-bold"/>
             <TextField fx:id="signInUsernameField" promptText="Enter your username" styleClass="text-input" />
         </VBox>
         <VBox spacing="5.0">
-            <Label text="Password" />
+            <Label text="Password" styleClass="label-bold"/>
             <PasswordField fx:id="signInPasswordField" promptText="Enter your password" styleClass="text-input" />
         </VBox>
-        <Button onAction="#handleSignInAction" styleClass="button" text="Sign In" />
+
+        <Button onAction="#handleSignInAction" styleClass="button" text="Sign In" maxWidth="Infinity"/>
+
         <HBox alignment="CENTER" spacing="5.0">
             <Label text="Don't have an account?" />
-            <Hyperlink onAction="#showSignUpPane" text="Sign Up" />
+            <Hyperlink onAction="#showSignUpPane" text="Sign Up" styleClass="hyperlink"/>
         </HBox>
     </VBox>
 
-    <VBox fx:id="signUpPane" alignment="CENTER" maxWidth="700" spacing="15.0" styleClass="root" visible="false">
+    <!-- SIGN UP PANE -->
+    <VBox fx:id="signUpPane" alignment="CENTER" maxWidth="800" spacing="15.0" styleClass="root" visible="false">
         <padding>
             <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
         </padding>
         <Label styleClass="title-label" text="Create an Account" />
 
-        <Label text="Profile Photo" style="-fx-font-weight: bold;"/>
+        <!-- Photo Selection Section -->
+        <HBox alignment="CENTER" spacing="20">
+            <VBox alignment="CENTER" spacing="10">
+                <Label text="Profile Photo" styleClass="label-bold"/>
+                <StackPane fx:id="imageCropContainer" maxWidth="100" maxHeight="100" styleClass="profile-image-view" style="-fx-cursor: hand;">
+                    <ImageView fx:id="profileImageView" fitHeight="100" fitWidth="100" preserveRatio="true" pickOnBounds="true" />
+                </StackPane>
+                <VBox alignment="CENTER" spacing="5.0" maxWidth="200">
+                    <Label text="Zoom &amp; Drag" style="-fx-font-size: 10px; -fx-text-fill: #666;"/>
+                    <Slider fx:id="zoomSlider" min="1" max="3" value="1" blockIncrement="0.1" disable="true"/>
+                </VBox>
+                <Button onAction="#handleChoosePhotoAction" styleClass="button-small" text="Choose Image" />
+                <Label fx:id="profilePhotoLabel" styleClass="feedback-label" text="No photo selected." />
+            </VBox>
 
-        <StackPane fx:id="imageCropContainer" maxWidth="100" maxHeight="100" style="-fx-border-color: #ccc; -fx-border-radius: 50%; -fx-cursor: move;">
-            <shape>
-                <Circle radius="50" />
-            </shape>
-            <ImageView fx:id="profileImageView" fitHeight="100" fitWidth="100" preserveRatio="true" pickOnBounds="true" />
-        </StackPane>
+            <!-- Bio Section (New) -->
+            <VBox spacing="5.0" HBox.hgrow="ALWAYS" maxWidth="300">
+                <Label text="About You (Bio)" styleClass="label-bold"/>
+                <TextArea fx:id="signUpBioArea" promptText="Tell us about your favorite movies..." prefRowCount="5" wrapText="true" styleClass="text-input"/>
+            </VBox>
+        </HBox>
 
-        <VBox alignment="CENTER" spacing="5" maxWidth="200">
-            <Label text="Zoom &amp; Drag to Adjust" style="-fx-font-size: 10px; -fx-text-fill: #666;"/>
-            <javafx.scene.control.Slider fx:id="zoomSlider" min="1" max="3" value="1" blockIncrement="0.1" disable="true"/>
-        </VBox>
-
-        <Button onAction="#handleChoosePhotoAction" styleClass="button" text="Choose Image" />
-        <Label fx:id="profilePhotoLabel" styleClass="feedback-label" text="No photo selected." />
-
-        <HBox spacing="15.0">
-
-            <VBox spacing="15.0" HBox.hgrow="ALWAYS">
+        <HBox spacing="20.0" alignment="CENTER">
+            <!-- Column 1 -->
+            <VBox spacing="15.0" HBox.hgrow="ALWAYS" maxWidth="300">
                 <VBox spacing="5.0">
-                    <Label text="Full Name" />
+                    <Label text="Full Name" styleClass="label-bold"/>
                     <TextField fx:id="signUpNameField" promptText="Enter your full name" styleClass="text-input" />
                 </VBox>
                 <VBox spacing="5.0">
-                    <Label text="Username" />
+                    <Label text="Username" styleClass="label-bold"/>
                     <TextField fx:id="signUpUsernameField" promptText="Choose a username" styleClass="text-input" />
                 </VBox>
                 <VBox spacing="5.0">
-                    <Label text="Email Address" />
+                    <Label text="Email Address" styleClass="label-bold"/>
                     <TextField fx:id="signUpEmailField" promptText="you@example.com" styleClass="text-input" />
                 </VBox>
             </VBox>
 
-            <VBox spacing="15.0" HBox.hgrow="ALWAYS">
-                <VBox spacing="5.0">
-                    <Label text="Age" />
-                    <TextField fx:id="signUpAgeField" promptText="Enter your age" styleClass="text-input" />
-                </VBox>
+            <!-- Column 2 -->
+            <VBox spacing="15.0" HBox.hgrow="ALWAYS" maxWidth="300">
+                <HBox spacing="10">
+                    <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                        <Label text="Age" styleClass="label-bold"/>
+                        <TextField fx:id="signUpAgeField" promptText="Age" styleClass="text-input" />
+                    </VBox>
+                    <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                        <Label text="Phone" styleClass="label-bold"/>
+                        <TextField fx:id="signUpPhoneField" promptText="Phone" styleClass="text-input" />
+                    </VBox>
+                </HBox>
 
                 <VBox spacing="5.0">
-                    <Label text="Phone Number" />
-                    <TextField fx:id="signUpPhoneField" promptText="Enter your phone number" styleClass="text-input" />
+                    <Label text="Password" styleClass="label-bold"/>
+                    <PasswordField fx:id="signUpPasswordField" promptText="Strong password" styleClass="text-input" />
                 </VBox>
                 <VBox spacing="5.0">
-                    <Label text="Password" />
-                    <PasswordField fx:id="signUpPasswordField" promptText="Choose a strong password" styleClass="text-input" />
-                </VBox>
-                <VBox spacing="5.0">
-                    <Label text="Confirm Password" />
-                    <PasswordField fx:id="signUpConfirmPasswordField" promptText="Confirm your password" styleClass="text-input" />
+                    <Label text="Confirm Password" styleClass="label-bold"/>
+                    <PasswordField fx:id="signUpConfirmPasswordField" promptText="Confirm password" styleClass="text-input" />
                 </VBox>
             </VBox>
+        </HBox>
 
-        </HBox> <Button onAction="#handleSignUpAction" styleClass="button" text="Sign Up">
-        <VBox.margin>
-            <Insets top="10.0" />
-        </VBox.margin>
-    </Button>
+        <Button onAction="#handleSignUpAction" styleClass="button" text="Create Account" minWidth="200">
+            <VBox.margin>
+                <Insets top="10.0" />
+            </VBox.margin>
+        </Button>
+
         <HBox alignment="CENTER" spacing="5.0">
             <Label text="Already have an account?" />
-            <Hyperlink onAction="#showSignInPane" text="Sign In" />
+            <Hyperlink onAction="#showSignInPane" text="Sign In" styleClass="hyperlink"/>
         </HBox>
     </VBox>
 </StackPane>

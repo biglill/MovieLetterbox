@@ -14,6 +14,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 public class FirebaseService {
@@ -50,33 +52,25 @@ public class FirebaseService {
                 .getService();
     }
 
-    /**
-     * Saves a User object to the 'users' collection.
-     * The User's userId field will be populated with the Firestore Document ID.
-     * @param user The User object to save.
-     * @return The new Document ID.
-     * @throws ExecutionException
-     * @throws InterruptedException
-     */
     public String saveUserDetails(User user) throws ExecutionException, InterruptedException {
-        // 1. Create a document reference with a new auto-generated ID
         DocumentReference docRef = db.collection("users").document();
-
-        // 2. Get that ID and set it on the user object
         user.setUserId(docRef.getId());
-
-        // 3. Now, save the user object (which includes its own ID)
         ApiFuture<WriteResult> future = docRef.set(user);
-
         System.out.println("User data saved successfully at: " + future.get().getUpdateTime());
-
-        // 4. Return the ID
         return docRef.getId();
     }
 
-    public void uploadProfilePhoto(File file, String userId) throws IOException, ExecutionException, InterruptedException {
+    // ADDED: Method to update existing user
+    public void updateUser(User user) throws ExecutionException, InterruptedException {
+        if (user.getUserId() == null) return;
+        DocumentReference docRef = db.collection("users").document(user.getUserId());
+        ApiFuture<WriteResult> future = docRef.set(user);
+        System.out.println("User updated at: " + future.get().getUpdateTime());
+    }
+
+    public String uploadProfilePhoto(File file, String userId) throws IOException, ExecutionException, InterruptedException {
         String fileExtension = getFileExtension(file.getName());
-        String blobName = "profile-images/" + userId + "." + fileExtension;
+        String blobName = "profile-images/" + userId + "-" + System.currentTimeMillis() + "." + fileExtension;
 
         BlobId blobId = BlobId.of(BUCKET_NAME, blobName);
         BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
@@ -91,6 +85,8 @@ public class FirebaseService {
         ApiFuture<WriteResult> updateFuture = userDoc.update("profilePhotoUrl", publicUrl);
         updateFuture.get();
         System.out.println("Successfully uploaded photo and updated user document.");
+
+        return publicUrl;
     }
 
     private String getFileExtension(String fileName) {

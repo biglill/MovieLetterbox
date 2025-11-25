@@ -9,6 +9,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextArea; // Imported TextArea
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -16,7 +17,6 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-// --- NEW IMPORTS FOR CROP & ZOOM ---
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.StackPane;
@@ -34,46 +34,30 @@ public class HelloController {
     private FirebaseService firebaseService;
     private File selectedPhotoFile;
 
-    @FXML
-    private VBox signInPane;
-    @FXML
-    private VBox signUpPane;
+    @FXML private VBox signInPane;
+    @FXML private VBox signUpPane;
+    @FXML private Label feedbackLabel;
 
-    @FXML
-    private Label feedbackLabel;
+    @FXML private TextField signInUsernameField;
+    @FXML private PasswordField signInPasswordField;
 
-    @FXML
-    private TextField signInUsernameField;
-    @FXML
-    private PasswordField signInPasswordField;
+    @FXML private TextField signUpNameField;
+    @FXML private TextField signUpEmailField;
+    @FXML private PasswordField signUpPasswordField;
+    @FXML private TextField signUpUsernameField;
+    @FXML private TextField signUpAgeField;
+    @FXML private TextField signUpPhoneField;
+    @FXML private PasswordField signUpConfirmPasswordField;
 
-    @FXML
-    private TextField signUpNameField;
-    @FXML
-    private TextField signUpEmailField;
-    @FXML
-    private PasswordField signUpPasswordField;
-    @FXML
-    private TextField signUpUsernameField;
-    @FXML
-    private TextField signUpAgeField;
+    // NEW: Bio Field
+    @FXML private TextArea signUpBioArea;
 
-    @FXML
-    private TextField signUpPhoneField;
-
-    @FXML
-    private PasswordField signUpConfirmPasswordField;
-
-    // --- UPDATED FXML FIELDS ---
     @FXML private ImageView profileImageView;
     @FXML private Label profilePhotoLabel;
 
-    // New container for the circle crop
     @FXML private StackPane imageCropContainer;
-    // New slider for zooming
     @FXML private Slider zoomSlider;
 
-    // Variables for dragging (panning) logic
     private double startX, startY;
     private double initialTranslateX, initialTranslateY;
 
@@ -82,7 +66,6 @@ public class HelloController {
         firebaseService = MainApplication.firebaseService;
 
         // --- 1. SETUP CIRCULAR CROP ---
-        // Clip the container to a Circle so anything dragged outside is hidden
         if (imageCropContainer != null) {
             Circle clip = new Circle(50);
             clip.setCenterX(50);
@@ -111,15 +94,6 @@ public class HelloController {
                 profileImageView.setScaleX(newVal.doubleValue());
                 profileImageView.setScaleY(newVal.doubleValue());
             });
-        }
-
-        // Try to load placeholder
-        try {
-            Image defaultImage = new Image(getClass().getResourceAsStream("placeholder.png"));
-            profileImageView.setImage(defaultImage);
-        } catch (Exception e) {
-            // Ignore if missing
-            System.err.println("Warning: placeholder.png not found.");
         }
     }
 
@@ -153,7 +127,6 @@ public class HelloController {
                     FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
                     Scene scene = new Scene(fxmlLoader.load(), 800, 800);
 
-                    // Ensure styles are loaded
                     if (MainApplication.class.getResource("Style.css") != null) {
                         scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
                     }
@@ -197,6 +170,7 @@ public class HelloController {
         String username = signUpUsernameField.getText();
         String age = signUpAgeField.getText();
         String phone = signUpPhoneField.getText();
+        String bio = signUpBioArea.getText(); // Get bio text
 
         if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() ||
                 username.isBlank() || age.isBlank() || phone.isBlank()) {
@@ -216,31 +190,25 @@ public class HelloController {
         newUser.setUsername(username);
         newUser.setAge(age);
         newUser.setPhone(phone);
+        newUser.setBio(bio); // Set the bio
         newUser.setProfilePhotoUrl(null);
 
         try {
-            // 1. Create the user document first to get the ID
             String newUserId = firebaseService.saveUserDetails(newUser);
             System.out.println("Successfully saved user data with ID: " + newUserId);
 
-            // 2. Upload the Photo (Cropped Version)
             if (profileImageView.getImage() != null && selectedPhotoFile != null) {
                 try {
-                    // --- CAPTURE THE CROP ---
-                    // Take a snapshot of the StackPane (which has the Circle clip)
                     SnapshotParameters params = new SnapshotParameters();
-                    params.setFill(Color.TRANSPARENT); // Keeps the background transparent outside the circle
+                    params.setFill(Color.TRANSPARENT);
                     var croppedImage = imageCropContainer.snapshot(params, null);
 
-                    // Save snapshot to a temporary file
                     File tempFile = File.createTempFile("profile_crop", ".png");
                     ImageIO.write(SwingFXUtils.fromFXImage(croppedImage, null), "png", tempFile);
 
-                    // Upload this temp file instead of the original
                     firebaseService.uploadProfilePhoto(tempFile, newUserId);
                     System.out.println("Photo uploaded and linked successfully.");
 
-                    // Clean up
                     tempFile.delete();
 
                 } catch (Exception e) {
@@ -273,7 +241,6 @@ public class HelloController {
 
         if (file != null) {
             try {
-                // --- RESET ADJUSTMENTS FOR NEW PHOTO ---
                 profileImageView.setTranslateX(0);
                 profileImageView.setTranslateY(0);
                 profileImageView.setScaleX(1);
@@ -318,12 +285,12 @@ public class HelloController {
         signUpUsernameField.clear();
         signUpAgeField.clear();
         signUpPhoneField.clear();
+        signUpBioArea.clear(); // Clear bio
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
         profileImageView.setImage(null);
 
-        // Reset crop/zoom UI
         profileImageView.setTranslateX(0);
         profileImageView.setTranslateY(0);
         profileImageView.setScaleX(1);
@@ -334,7 +301,6 @@ public class HelloController {
         }
 
         feedbackLabel.setText("");
-
         signInUsernameField.clear();
         signInPasswordField.clear();
     }

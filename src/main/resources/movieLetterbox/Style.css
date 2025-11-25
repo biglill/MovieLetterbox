@@ -91,15 +91,11 @@
 /* Search Bar Specifics (Matches Text Input Style now) */
 .search-container {
     -fx-background-color: #FFFFFF;
-
-    /* CHANGED: Updated radius and border to match .text-input style */
     -fx-background-radius: 8px;
     -fx-border-radius: 8px;
     -fx-border-color: #E0E0E0;
     -fx-border-width: 1px;
-
     -fx-padding: 0 15px;
-    /* CHANGED: Updated shadow to match .text-input style */
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.05), 5, 0, 0, 2);
     -fx-min-width: 300px;
 }
@@ -148,6 +144,54 @@
     -fx-background-color: #383B89; /* Darker purple on click */
     -fx-translate-y: 1;
     -fx-effect: none;
+}
+
+.button-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #4C51BF;
+    -fx-font-weight: bold;
+    -fx-border-color: #4C51BF;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+}
+
+.button-secondary:hover {
+    -fx-background-color: rgba(76, 81, 191, 0.1);
+}
+
+.button-small {
+    fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 10px 18px;
+    -fx-background-radius: 8px;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 5, 0, 0, 2);
+}
+.button-small:hover {
+    -fx-background-color: #646AF1; /* Lighter purple on hover */
+    -fx-scale-y: 1.02;
+    -fx-scale-x: 1.02;
+}
+
+.button-return {
+    -fx-background-color: transparent;
+    -fx-text-fill: #4C51BF;
+    -fx-font-weight: bold;
+    -fx-border-color: #4C51BF;
+    -fx-border-width: 2px;
+    -fx-border-radius: 6px;
+    -fx-background-radius: 6px;
+    -fx-padding: 7px 16px;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+
+.button-return:hover {
+    -fx-background-color: rgba(76, 81, 191, 0.1);
 }
 
 .hyperlink {
@@ -209,6 +253,12 @@
     -fx-background-color: #EDF2F7;
 }
 
+/* Header Profile Image (Smaller version in menu) */
+.header-profile-image {
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);
+    -fx-cursor: hand;
+}
+
 .profile-container {
     -fx-cursor: hand;
     -fx-padding: 5;
@@ -244,8 +294,58 @@
     -fx-stroke-width: 1;
 }
 
-/* Header Profile Image */
-.header-profile-image {
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.15), 2, 0, 0, 1);
-    -fx-cursor: hand;
+/* =============================================================================
+   7. PROFILE PAGE SPECIFIC STYLES
+   ============================================================================= */
+
+
+
+/* Username on Profile Page */
+.profile-page-username {
+    -fx-font-size: 36px;
+    -fx-font-weight: normal; /* The screenshot looks slightly thinner/normal weight */
+    -fx-text-fill: #000000;
+}
+
+/* Bio Text */
+.profile-page-bio {
+    -fx-font-family: "Monospaced", monospace;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333;
+}
+
+/* Section Headers ("Favorite Films", "Recent Posts") */
+.section-header {
+    -fx-font-family: "Monospaced", monospace;
+    -fx-font-size: 24px;
+    -fx-text-fill: #000000;
+    -fx-border-color: transparent transparent #000000 transparent; /* Bottom border only */
+    -fx-border-width: 1;
+    -fx-padding: 0 0 5 0;
+    -fx-min-width: 600px; /* Make the line stretch a bit */
+}
+
+/* Placeholder Movie Poster Style */
+.poster-placeholder {
+    -fx-background-color: #000000; /* Black background like the screenshot posters */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 2);
+}
+
+/* Review Card Styling */
+.review-card {
+    -fx-background-color: transparent;
+    -fx-padding: 10;
+}
+
+.review-movie-title {
+    -fx-font-family: "Monospaced", monospace;
+    -fx-font-size: 14px;
+    -fx-text-fill: #333333;
+}
+
+.review-comment {
+    -fx-font-family: "Monospaced", monospace;
+    -fx-font-size: 14px;
+    -fx-text-fill: #555555;
+    -fx-font-style: italic;
 }
