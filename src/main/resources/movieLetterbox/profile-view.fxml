@@ -46,13 +46,17 @@
                             <Label fx:id="viewUsernameLabel" text="UserName" styleClass="profile-page-username" style="-fx-font-size: 42px;"/>
 
                             <!-- ACTIONS CONTAINER -->
-                            <HBox spacing="10">
+                            <HBox spacing="10" alignment="CENTER_LEFT">
                                 <Button fx:id="editProfileButton" text="Edit Profile" onAction="#handleEditProfileAction" styleClass="button-edit-profile"/>
                                 <!-- NEW: Follow Button (Hidden by default) -->
                                 <Button fx:id="followButton" text="Follow" onAction="#handleFollowAction" styleClass="button" visible="false" managed="false"/>
+                                <!-- NEW: "Follows you" Label (Hidden by default) -->
+                                <Label fx:id="followsYouLabel" text="Follows you" visible="false" managed="false"/>
                             </HBox>
                         </HBox>
                         <Label fx:id="viewBioLabel" text="Bio:" styleClass="profile-page-bio" style="-fx-font-size: 16px;"/>
+                        <!-- NEW: Community Button -->
+                        <Button text="Community" onAction="#handleCommunityAction" styleClass="button-small"/>
                     </VBox>
                 </HBox>
 
@@ -127,6 +131,30 @@
                 <Button text="Cancel" onAction="#handleCancelPasswordAction" styleClass="button-secondary"/>
                 <Button text="Update Password" onAction="#handleUpdatePasswordAction" styleClass="button"/>
             </HBox>
+        </VBox>
+    </VBox>
+
+    <!-- NEW: COMMUNITY POPUP -->
+    <VBox fx:id="communityPane" visible="false" alignment="CENTER" style="-fx-background-color: rgba(0,0,0,0.5);">
+        <VBox alignment="TOP_CENTER" maxWidth="500" maxHeight="600" spacing="15" style="-fx-padding: 30; -fx-background-color: white; -fx-background-radius: 10; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Community" styleClass="title-label" style="-fx-font-size: 24px;"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button text="X" onAction="#handleCloseCommunityAction" style="-fx-background-color: transparent; -fx-text-fill: #999; -fx-font-weight: bold; -fx-cursor: hand;"/>
+            </HBox>
+
+            <HBox spacing="20" alignment="CENTER">
+                <Button text="Followers" onAction="#handleShowFollowers" styleClass="button-secondary"/>
+                <Button text="Following" onAction="#handleShowFollowing" styleClass="button-secondary"/>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" styleClass="scroll-pane-transparent" VBox.vgrow="ALWAYS">
+                <content>
+                    <VBox fx:id="userListContainer" spacing="10" style="-fx-padding: 10;">
+                        <!-- User cards go here -->
+                    </VBox>
+                </content>
+            </ScrollPane>
         </VBox>
     </VBox>
 </StackPane>

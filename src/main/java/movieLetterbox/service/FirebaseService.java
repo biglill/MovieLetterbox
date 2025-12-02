@@ -64,15 +64,13 @@ public class FirebaseService {
         DocumentReference docRef = db.collection("users").document();
         user.setUserId(docRef.getId());
         ApiFuture<WriteResult> future = docRef.set(user);
-        System.out.println("User data saved successfully at: " + future.get().getUpdateTime());
         return docRef.getId();
     }
 
     public void updateUser(User user) throws ExecutionException, InterruptedException {
         if (user.getUserId() == null) return;
         DocumentReference docRef = db.collection("users").document(user.getUserId());
-        ApiFuture<WriteResult> future = docRef.set(user);
-        System.out.println("User updated at: " + future.get().getUpdateTime());
+        docRef.set(user);
     }
 
     public String uploadProfilePhoto(File file, String userId) throws IOException, ExecutionException, InterruptedException {
@@ -89,19 +87,13 @@ public class FirebaseService {
         String publicUrl = blob.getMediaLink();
 
         DocumentReference userDoc = db.collection("users").document(userId);
-        ApiFuture<WriteResult> updateFuture = userDoc.update("profilePhotoUrl", publicUrl);
-        updateFuture.get();
-        System.out.println("Successfully uploaded photo and updated user document.");
-
+        userDoc.update("profilePhotoUrl", publicUrl).get();
         return publicUrl;
     }
 
     private String getFileExtension(String fileName) {
         int lastIndexOf = fileName.lastIndexOf(".");
-        if (lastIndexOf == -1) {
-            return "";
-        }
-        return fileName.substring(lastIndexOf + 1);
+        return (lastIndexOf == -1) ? "" : fileName.substring(lastIndexOf + 1);
     }
 
     public User getUserByUsername(String username) throws ExecutionException, InterruptedException {
@@ -111,9 +103,8 @@ public class FirebaseService {
 
         if (!querySnapshot.get().getDocuments().isEmpty()) {
             return querySnapshot.get().getDocuments().get(0).toObject(User.class);
-        } else {
-            return null;
         }
+        return null;
     }
 
     public User getUserByEmail(String email) throws ExecutionException, InterruptedException {
@@ -123,9 +114,8 @@ public class FirebaseService {
 
         if (!querySnapshot.get().getDocuments().isEmpty()) {
             return querySnapshot.get().getDocuments().get(0).toObject(User.class);
-        } else {
-            return null;
         }
+        return null;
     }
 
     public User getUserById(String userId) throws ExecutionException, InterruptedException {
@@ -136,11 +126,7 @@ public class FirebaseService {
         return null;
     }
 
-    /**
-     * Search for users where username starts with the query string.
-     */
     public List<User> searchUsers(String usernameQuery) throws ExecutionException, InterruptedException {
-        // Simple prefix search using Firestore range queries
         String end = usernameQuery + "\uf8ff";
         Query query = db.collection("users")
                 .orderBy("username")
@@ -185,6 +171,27 @@ public class FirebaseService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public List<User> getFollowers(String userId) throws ExecutionException, InterruptedException {
+        Query query = db.collection("users").whereArrayContains("following", userId);
+        ApiFuture<QuerySnapshot> future = query.get();
+        List<User> users = new ArrayList<>();
+        for (DocumentSnapshot doc : future.get().getDocuments()) {
+            users.add(doc.toObject(User.class));
+        }
+        return users;
+    }
+
+    public List<User> getUsersByIds(List<String> userIds) throws ExecutionException, InterruptedException {
+        List<User> users = new ArrayList<>();
+        if (userIds == null || userIds.isEmpty()) return users;
+
+        for (String id : userIds) {
+            User u = getUserById(id);
+            if (u != null) users.add(u);
+        }
+        return users;
     }
 
     // --- FAVORITES METHODS ---

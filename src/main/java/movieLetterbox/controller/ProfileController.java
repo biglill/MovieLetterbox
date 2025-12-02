@@ -33,6 +33,7 @@ import movieLetterbox.service.OmdbService;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class ProfileController {
@@ -44,7 +45,8 @@ public class ProfileController {
     @FXML private Label viewBioLabel;
     @FXML private HBox favoritesContainer;
     @FXML private Button editProfileButton;
-    @FXML private Button followButton; // NEW
+    @FXML private Button followButton;
+    @FXML private Label followsYouLabel;
 
     // --- VIEW 2: EDIT PAGE FIELDS ---
     @FXML private VBox editProfilePane;
@@ -62,6 +64,10 @@ public class ProfileController {
     @FXML private PasswordField newPasswordField;
     @FXML private PasswordField confirmNewPasswordField;
     @FXML private Label passwordStatusLabel;
+
+    // --- VIEW 4: COMMUNITY POPUP ---
+    @FXML private VBox communityPane;
+    @FXML private VBox userListContainer;
 
     // currentUser = The logged-in user
     private User currentUser;
@@ -81,6 +87,7 @@ public class ProfileController {
         profileViewPane.setVisible(true);
         editProfilePane.setVisible(false);
         if (changePasswordPane != null) changePasswordPane.setVisible(false);
+        if (communityPane != null) communityPane.setVisible(false);
 
         // Setup image crop interactions
         if (imageCropContainer != null) {
@@ -109,19 +116,12 @@ public class ProfileController {
         }
     }
 
-    /**
-     * Sets the logged-in user.
-     * By default, this assumes the user is viewing their OWN profile.
-     */
     public void setUserData(User user) {
         this.currentUser = user;
         this.profileUser = user; // Default to self-view
         updateUI();
     }
 
-    /**
-     * Call this when viewing ANOTHER user's profile.
-     */
     public void setProfileData(User currentUser, User targetUser) {
         this.currentUser = currentUser;
         this.profileUser = targetUser;
@@ -131,11 +131,9 @@ public class ProfileController {
     private void updateUI() {
         if (profileUser == null) return;
 
-        // 1. Load Profile Details
         viewUsernameLabel.setText(profileUser.getUsername());
         viewBioLabel.setText("Bio: " + (profileUser.getBio() != null ? profileUser.getBio() : ""));
 
-        // Load image
         if (profileUser.getProfilePhotoUrl() != null && !profileUser.getProfilePhotoUrl().isBlank()) {
             Image image = new Image(profileUser.getProfilePhotoUrl(), true);
             viewProfileImage.setImage(image);
@@ -151,28 +149,26 @@ public class ProfileController {
         }
         resetImageAdjustment();
 
-        // 2. Handle "My Profile" vs "Friend's Profile"
         if (currentUser.getUserId().equals(profileUser.getUserId())) {
-            // Viewing Self
             editProfileButton.setVisible(true);
             editProfileButton.setManaged(true);
             followButton.setVisible(false);
             followButton.setManaged(false);
-
-            // Populate edit fields
+            if (followsYouLabel != null) {
+                followsYouLabel.setVisible(false);
+                followsYouLabel.setManaged(false);
+            }
             usernameField.setText(currentUser.getUsername());
             bioArea.setText(currentUser.getBio() != null ? currentUser.getBio() : "");
         } else {
-            // Viewing Someone Else
             editProfileButton.setVisible(false);
             editProfileButton.setManaged(false);
             followButton.setVisible(true);
             followButton.setManaged(true);
-
             updateFollowButtonState();
+            checkIfFollowsBack();
         }
 
-        // 3. Load Favorites (of the profileUser, not currentUser)
         loadFavorites();
     }
 
@@ -180,36 +176,156 @@ public class ProfileController {
         boolean isFollowing = currentUser.getFollowing() != null && currentUser.getFollowing().contains(profileUser.getUserId());
         if (isFollowing) {
             followButton.setText("Unfollow");
-            followButton.setStyle("-fx-background-color: #E53E3E;"); // Red for unfollow
+            followButton.setStyle("-fx-background-color: #E53E3E;");
         } else {
-            followButton.setText("Follow");
-            followButton.setStyle("-fx-background-color: #4C51BF;"); // Standard purple
+            boolean followsMe = profileUser.getFollowing() != null && profileUser.getFollowing().contains(currentUser.getUserId());
+            if (followsMe) {
+                followButton.setText("Follow Back");
+            } else {
+                followButton.setText("Follow");
+            }
+            followButton.setStyle("-fx-background-color: #4C51BF;");
+        }
+    }
+
+    private void checkIfFollowsBack() {
+        if (followsYouLabel == null) return;
+        boolean followsMe = profileUser.getFollowing() != null && profileUser.getFollowing().contains(currentUser.getUserId());
+        if (followsMe) {
+            followsYouLabel.setVisible(true);
+            followsYouLabel.setManaged(true);
+            followsYouLabel.setText("Follows you");
+            followsYouLabel.setStyle("-fx-background-color: #E2E8F0; -fx-text-fill: #4A5568; -fx-padding: 2 6; -fx-background-radius: 4; -fx-font-size: 12px;");
+        } else {
+            followsYouLabel.setVisible(false);
+            followsYouLabel.setManaged(false);
         }
     }
 
     @FXML
     void handleFollowAction(ActionEvent event) {
         boolean isFollowing = currentUser.getFollowing() != null && currentUser.getFollowing().contains(profileUser.getUserId());
-
         if (isFollowing) {
             firebaseService.unfollowUser(currentUser, profileUser.getUserId());
         } else {
             firebaseService.followUser(currentUser, profileUser.getUserId());
         }
-        // Update UI immediately
         updateFollowButtonState();
+    }
+
+    // --- COMMUNITY POPUP ACTIONS ---
+
+    @FXML
+    void handleCommunityAction(ActionEvent event) {
+        communityPane.setVisible(true);
+        handleShowFollowing(null);
+    }
+
+    @FXML
+    void handleCloseCommunityAction(ActionEvent event) {
+        communityPane.setVisible(false);
+        userListContainer.getChildren().clear();
+    }
+
+    @FXML
+    void handleShowFollowing(ActionEvent event) {
+        userListContainer.getChildren().clear();
+        Label loading = new Label("Loading...");
+        userListContainer.getChildren().add(loading);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                List<User> users = firebaseService.getUsersByIds(profileUser.getFollowing());
+                Platform.runLater(() -> loadUserList(users));
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> loading.setText("Error loading users."));
+            }
+        });
+    }
+
+    @FXML
+    void handleShowFollowers(ActionEvent event) {
+        userListContainer.getChildren().clear();
+        Label loading = new Label("Loading...");
+        userListContainer.getChildren().add(loading);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                List<User> users = firebaseService.getFollowers(profileUser.getUserId());
+                Platform.runLater(() -> loadUserList(users));
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> loading.setText("Error loading users."));
+            }
+        });
+    }
+
+    private void loadUserList(List<User> users) {
+        userListContainer.getChildren().clear();
+
+        if (users == null || users.isEmpty()) {
+            Label empty = new Label("No users found.");
+            empty.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
+            userListContainer.getChildren().add(empty);
+            return;
+        }
+
+        for (User u : users) {
+            HBox card = new HBox(10);
+            card.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+            card.setStyle("-fx-background-color: #f9f9f9; -fx-padding: 10; -fx-background-radius: 5; -fx-cursor: hand;");
+
+            ImageView avatar = new ImageView();
+            avatar.setFitWidth(40);
+            avatar.setFitHeight(40);
+            if (u.getProfilePhotoUrl() != null && !u.getProfilePhotoUrl().isBlank()) {
+                avatar.setImage(new Image(u.getProfilePhotoUrl(), true));
+                avatar.setClip(new Circle(20, 20, 20));
+            } else {
+                try {
+                    if (MainApplication.class.getResource("placeholder.png") != null) {
+                        avatar.setImage(new Image(MainApplication.class.getResource("placeholder.png").toExternalForm()));
+                    }
+                } catch(Exception e){}
+            }
+
+            Label name = new Label(u.getUsername());
+            name.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
+
+            card.getChildren().addAll(avatar, name);
+
+            card.setOnMouseClicked(e -> {
+                handleCloseCommunityAction(null);
+                try {
+                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
+                    Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+                    if (MainApplication.class.getResource("Style.css") != null) {
+                        scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                    }
+                    ProfileController controller = fxmlLoader.getController();
+                    controller.setProfileData(currentUser, u);
+
+                    Stage stage = (Stage) profileViewPane.getScene().getWindow();
+                    stage.setScene(scene);
+                    stage.setTitle("Profile - " + u.getUsername());
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+            userListContainer.getChildren().add(card);
+        }
     }
 
     private void loadFavorites() {
         favoritesContainer.getChildren().clear();
-
         if (profileUser.getFavorites() == null || profileUser.getFavorites().isEmpty()) {
             Label placeholder = new Label("No favorite movies yet.");
             placeholder.setStyle("-fx-text-fill: #888888; -fx-font-style: italic;");
             favoritesContainer.getChildren().add(placeholder);
             return;
         }
-
         for (String movieId : profileUser.getFavorites()) {
             CompletableFuture.runAsync(() -> {
                 try {
@@ -229,19 +345,15 @@ public class ProfileController {
         card.setPrefWidth(200);
         card.setPrefHeight(300);
         card.setAlignment(javafx.geometry.Pos.CENTER);
-
         ImageView poster = new ImageView();
         poster.setFitWidth(180);
         poster.setFitHeight(270);
         poster.setPreserveRatio(true);
         poster.getStyleClass().add("movie-poster");
-
         if (movie.getPosterPic() != null && !movie.getPosterPic().equals("N/A")) {
             poster.setImage(new Image(movie.getPosterPic(), true));
         }
-
         card.getChildren().addAll(poster);
-
         card.setOnMouseClicked(e -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("movie-details.fxml"));
@@ -251,8 +363,7 @@ public class ProfileController {
                 }
                 MovieDetailsController controller = fxmlLoader.getController();
                 controller.setMovieData(movie.getMovieId());
-                controller.setUserData(currentUser); // Keep logged-in user
-
+                controller.setUserData(currentUser);
                 Stage stage = (Stage) favoritesContainer.getScene().getWindow();
                 stage.setScene(scene);
                 stage.setTitle(movie.getName() + " - Details");
@@ -276,7 +387,6 @@ public class ProfileController {
         }
     }
 
-    // --- NAVIGATION ACTIONS ---
     @FXML
     void handleBackAction(ActionEvent event) {
         try {
@@ -309,7 +419,6 @@ public class ProfileController {
         updateUI();
     }
 
-    // --- EDIT ACTIONS ---
     @FXML
     void handleChangePhotoAction(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();

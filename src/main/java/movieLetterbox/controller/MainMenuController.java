@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
+import javafx.event.ActionEvent; // NEW: Added import
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -34,7 +35,7 @@ public class MainMenuController {
     @FXML private Label welcomeLabel;
     @FXML private TextField searchField;
     @FXML private TilePane movieGrid;
-    @FXML private ComboBox<String> searchTypeCombo; // NEW: To switch modes
+    @FXML private ComboBox<String> searchTypeCombo;
 
     @FXML private ImageView userProfileImage;
     @FXML private SVGPath defaultProfileIcon;
@@ -81,8 +82,6 @@ public class MainMenuController {
             searchField.setOnAction(event -> handleSearch());
         }
 
-        // NEW: Fix for ComboBox text visibility
-        // Explicitly set the "Button Cell" (the part visible when closed) to show the text
         if (searchTypeCombo != null) {
             searchTypeCombo.setButtonCell(new ListCell<String>() {
                 @Override
@@ -92,13 +91,11 @@ public class MainMenuController {
                         setText(null);
                     } else {
                         setText(item);
-                        // Force styles: Purple text, Bold, and some padding
                         setStyle("-fx-text-fill: #4C51BF; -fx-font-weight: bold; -fx-padding: 0 0 0 5;");
                     }
                 }
             });
 
-            // Ensure "Movies" is selected by default if nothing is set
             if (searchTypeCombo.getValue() == null) {
                 searchTypeCombo.getSelectionModel().select("Movies");
             }
@@ -113,7 +110,6 @@ public class MainMenuController {
         loadDashboardMovies();
     }
 
-    // Unified Search Handler
     private void handleSearch() {
         String query = searchField.getText();
         if (query == null || query.isBlank()) return;
@@ -152,10 +148,9 @@ public class MainMenuController {
 
     private VBox createUserCard(User targetUser) {
         VBox card = new VBox();
-        card.getStyleClass().add("movie-card"); // Reuse card style
+        card.getStyleClass().add("movie-card");
         card.setAlignment(javafx.geometry.Pos.CENTER);
 
-        // Circular Profile Image
         ImageView profileImg = new ImageView();
         profileImg.setFitWidth(150);
         profileImg.setFitHeight(150);
@@ -178,7 +173,6 @@ public class MainMenuController {
 
         card.getChildren().addAll(profileImg, nameLabel);
 
-        // Click to Open Profile
         card.setOnMouseClicked(e -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
@@ -188,7 +182,6 @@ public class MainMenuController {
                 }
 
                 ProfileController controller = fxmlLoader.getController();
-                // We are 'user', looking at 'targetUser'
                 controller.setProfileData(this.user, targetUser);
 
                 Stage stage = (Stage) welcomeLabel.getScene().getWindow();
@@ -202,7 +195,7 @@ public class MainMenuController {
         return card;
     }
 
-    // --- MOVIE SEARCH LOGIC (Existing) ---
+    // --- MOVIE SEARCH LOGIC ---
     private void loadDashboardMovies() {
         movieGrid.getChildren().clear();
         for (String title : RECENT_MOVIES) {
@@ -367,7 +360,18 @@ public class MainMenuController {
     }
 
     @FXML
-    void handleLogoutAction(MouseEvent event) {
-        handleProfileViewAction(event);
+    void handleLogoutAction(ActionEvent event) {
+        try {
+            FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("login.fxml"));
+            Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+            if (MainApplication.class.getResource("Style.css") != null) {
+                scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+            }
+            Stage stage = (Stage) welcomeLabel.getScene().getWindow();
+            stage.setScene(scene);
+            stage.setTitle("MovieLetterbox - Login");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
