@@ -28,7 +28,7 @@ import movieLetterbox.MainApplication;
 import movieLetterbox.model.Movie;
 import movieLetterbox.model.User;
 import movieLetterbox.service.FirebaseService;
-import movieLetterbox.service.OmdbService;
+import movieLetterbox.service.TmdbService;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -38,7 +38,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class ProfileController {
 
-    // --- VIEW 1: PROFILE PAGE FIELDS ---
     @FXML private ScrollPane profileViewPane;
     @FXML private ImageView viewProfileImage;
     @FXML private Label viewUsernameLabel;
@@ -48,7 +47,6 @@ public class ProfileController {
     @FXML private Button followButton;
     @FXML private Label followsYouLabel;
 
-    // --- VIEW 2: EDIT PAGE FIELDS ---
     @FXML private VBox editProfilePane;
     @FXML private ImageView profileImageView;
     @FXML private StackPane imageCropContainer;
@@ -58,24 +56,20 @@ public class ProfileController {
     @FXML private TextArea bioArea;
     @FXML private Label statusLabel;
 
-    // --- VIEW 3: CHANGE PASSWORD FIELDS ---
     @FXML private VBox changePasswordPane;
     @FXML private PasswordField currentPasswordField;
     @FXML private PasswordField newPasswordField;
     @FXML private PasswordField confirmNewPasswordField;
     @FXML private Label passwordStatusLabel;
 
-    // --- VIEW 4: COMMUNITY POPUP ---
     @FXML private VBox communityPane;
     @FXML private VBox userListContainer;
 
-    // currentUser = The logged-in user
     private User currentUser;
-    // profileUser = The user whose profile we are looking at
     private User profileUser;
 
     private FirebaseService firebaseService;
-    private final OmdbService omdbService = new OmdbService();
+    private final TmdbService tmdbService = MainApplication.tmdbService; // CHANGED
     private File selectedPhotoFile;
 
     private double startX, startY;
@@ -89,7 +83,6 @@ public class ProfileController {
         if (changePasswordPane != null) changePasswordPane.setVisible(false);
         if (communityPane != null) communityPane.setVisible(false);
 
-        // Setup image crop interactions
         if (imageCropContainer != null) {
             Circle clip = new Circle(50);
             clip.setCenterX(50);
@@ -118,7 +111,7 @@ public class ProfileController {
 
     public void setUserData(User user) {
         this.currentUser = user;
-        this.profileUser = user; // Default to self-view
+        this.profileUser = user;
         updateUI();
     }
 
@@ -130,7 +123,6 @@ public class ProfileController {
 
     private void updateUI() {
         if (profileUser == null) return;
-
         viewUsernameLabel.setText(profileUser.getUsername());
         viewBioLabel.setText("Bio: " + (profileUser.getBio() != null ? profileUser.getBio() : ""));
 
@@ -168,7 +160,6 @@ public class ProfileController {
             updateFollowButtonState();
             checkIfFollowsBack();
         }
-
         loadFavorites();
     }
 
@@ -213,8 +204,6 @@ public class ProfileController {
         updateFollowButtonState();
     }
 
-    // --- COMMUNITY POPUP ACTIONS ---
-
     @FXML
     void handleCommunityAction(ActionEvent event) {
         communityPane.setVisible(true);
@@ -239,7 +228,6 @@ public class ProfileController {
                 Platform.runLater(() -> loadUserList(users));
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> loading.setText("Error loading users."));
             }
         });
     }
@@ -256,14 +244,12 @@ public class ProfileController {
                 Platform.runLater(() -> loadUserList(users));
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> loading.setText("Error loading users."));
             }
         });
     }
 
     private void loadUserList(List<User> users) {
         userListContainer.getChildren().clear();
-
         if (users == null || users.isEmpty()) {
             Label empty = new Label("No users found.");
             empty.setStyle("-fx-text-fill: #999; -fx-font-style: italic;");
@@ -329,7 +315,8 @@ public class ProfileController {
         for (String movieId : profileUser.getFavorites()) {
             CompletableFuture.runAsync(() -> {
                 try {
-                    JsonObject json = omdbService.GetMovieByID(movieId);
+                    // Use TMDB to get details for favorites
+                    JsonObject json = tmdbService.getMovieById(movieId);
                     Movie movie = new Movie(json);
                     Platform.runLater(() -> favoritesContainer.getChildren().add(createFavoriteCard(movie)));
                 } catch (Exception e) {

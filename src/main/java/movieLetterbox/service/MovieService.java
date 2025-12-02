@@ -3,25 +3,22 @@ package movieLetterbox.service;
 import com.google.gson.GsonBuilder;
 import movieLetterbox.MainApplication;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MovieService {
     private FirebaseService firebaseService;
-    private OmdbService omdbService;
+    private TmdbService tmdbService;
 
     public MovieService() {
         firebaseService = MainApplication.firebaseService;
-        omdbService = MainApplication.omdbService;
+        tmdbService = MainApplication.tmdbService;
     }
 
     public void CreateMovie(String movieID) {
         try {
-            JsonObject movieJson = omdbService.GetMovieByID(movieID);
+            JsonObject movieJson = tmdbService.getMovieById(movieID);
 
-            if (movieJson.get("Response").getAsBoolean()) {
+            if (movieJson != null && movieJson.has("id")) {
                 System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(movieJson));
             }
         } catch (IOException | InterruptedException e) {

@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
+import javafx.fxml.FXML; // Added missing import
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
@@ -22,10 +22,10 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import movieLetterbox.MainApplication;
-import movieLetterbox.model.Movie; // NEW: Added Import
+import movieLetterbox.model.Movie;
 import movieLetterbox.model.User;
 import movieLetterbox.service.FirebaseService;
-import movieLetterbox.service.OmdbService;
+import movieLetterbox.service.TmdbService;
 
 import java.io.IOException;
 import java.util.List;
@@ -42,13 +42,14 @@ public class MainMenuController {
     @FXML private SVGPath defaultProfileIcon;
 
     private User user;
-    private final OmdbService omdbService = new OmdbService();
+    private final TmdbService tmdbService = MainApplication.tmdbService;
     private final FirebaseService firebaseService = MainApplication.firebaseService;
 
+    // TMDB requires queries, but we can default to searching a few popular titles
     private final String[] RECENT_MOVIES = {
-            "Dune: Part Two", "Civil War", "The Fall Guy", "Challengers",
-            "Kingdom of the Planet of the Apes", "Godzilla x Kong: The New Empire",
-            "Furiosa: A Mad Max Saga", "Kung Fu Panda 4", "Inside Out 2"
+            "Dune", "Civil War", "The Fall Guy", "Challengers",
+            "Kingdom of the Planet of the Apes", "Godzilla",
+            "Furiosa", "Kung Fu Panda 4", "Inside Out 2"
     };
 
     public void setUserData(User user) {
@@ -124,11 +125,8 @@ public class MainMenuController {
         }
     }
 
-    // --- USER SEARCH LOGIC ---
     private void searchUsers(String query) {
         movieGrid.getChildren().clear();
-
-        // Add loading indicator
         Label loadingLabel = new Label("Searching users...");
         loadingLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #555;");
         movieGrid.getChildren().add(loadingLabel);
@@ -137,7 +135,7 @@ public class MainMenuController {
             try {
                 List<User> users = firebaseService.searchUsers(query);
                 Platform.runLater(() -> {
-                    movieGrid.getChildren().clear(); // Clear loading
+                    movieGrid.getChildren().clear();
                     if (users.isEmpty()) {
                         Label noRes = new Label("No users found.");
                         noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
@@ -150,12 +148,6 @@ public class MainMenuController {
                 });
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> {
-                    movieGrid.getChildren().clear();
-                    Label err = new Label("Error searching users.");
-                    err.setStyle("-fx-text-fill: red;");
-                    movieGrid.getChildren().add(err);
-                });
             }
         });
     }
@@ -209,10 +201,11 @@ public class MainMenuController {
         return card;
     }
 
-    // --- MOVIE SEARCH LOGIC ---
+    // --- MOVIE SEARCH LOGIC (UPDATED FOR TMDB) ---
     private void loadDashboardMovies() {
         movieGrid.getChildren().clear();
         for (String title : RECENT_MOVIES) {
+            // In TMDB, we search for the movie and take the first result
             fetchAndAddMovieByTitle(title);
         }
     }
@@ -220,57 +213,52 @@ public class MainMenuController {
     private void searchMovies(String query) {
         movieGrid.getChildren().clear();
 
-        // Show loading state
-        Label loadingLabel = new Label("Searching movies...");
+        Label loadingLabel = new Label("Searching TMDB...");
         loadingLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
         movieGrid.getChildren().add(loadingLabel);
 
         CompletableFuture.runAsync(() -> {
             try {
-                JsonObject searchResult = omdbService.SearchMovie(query);
+                JsonObject searchResult = tmdbService.searchMovies(query);
 
-                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel)); // Remove loading label
+                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel));
 
-                if (searchResult != null && searchResult.has("Response")
-                        && "True".equalsIgnoreCase(searchResult.get("Response").getAsString())) {
+                if (searchResult != null && searchResult.has("results")) {
+                    JsonArray results = searchResult.getAsJsonArray("results");
 
-                    JsonArray searchList = searchResult.getAsJsonArray("Search");
+                    if (results.size() == 0) {
+                        Platform.runLater(() -> {
+                            Label noRes = new Label("No movies found.");
+                            noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+                            movieGrid.getChildren().add(noRes);
+                        });
+                        return;
+                    }
 
-                    // IMPROVEMENT: Parallelize details fetching
-                    // Instead of a simple for-loop that waits for each request,
-                    // we spawn a new async task for every movie found.
-                    for (JsonElement element : searchList) {
+                    for (JsonElement element : results) {
+                        // Create Movie directly from search result JSON
+                        // TMDB search results contain enough info for a card (Title, Poster, ID, Rating)
+                        Movie tmdbMovie = new Movie(element.getAsJsonObject());
+
+                        // Check Firebase for community rating
                         CompletableFuture.runAsync(() -> {
                             try {
-                                JsonObject simpleMovie = element.getAsJsonObject();
-                                if (simpleMovie.has("imdbID")) {
-                                    String imdbID = simpleMovie.get("imdbID").getAsString();
-
-                                    // 1. Fetch full OMDB Details
-                                    JsonObject fullMovie = omdbService.GetMovieByID(imdbID);
-
-                                    // 2. HYBRID LOAD: Fetch Firebase Ratings
-                                    Movie firebaseMovie = firebaseService.getMovie(imdbID);
-
-                                    Platform.runLater(() -> {
-                                        addMovieToGrid(fullMovie, firebaseMovie);
-                                    });
-                                }
+                                Movie firebaseMovie = firebaseService.getMovie(tmdbMovie.getMovieId());
+                                Platform.runLater(() -> addMovieToGrid(tmdbMovie, firebaseMovie));
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         });
                     }
-                } else {
-                    Platform.runLater(() -> {
-                        Label noRes = new Label("No movies found.");
-                        noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
-                        movieGrid.getChildren().add(noRes);
-                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel));
+                Platform.runLater(() -> {
+                    movieGrid.getChildren().remove(loadingLabel);
+                    Label err = new Label("Error connecting to TMDB.");
+                    err.setStyle("-fx-text-fill: red;");
+                    movieGrid.getChildren().add(err);
+                });
             }
         });
     }
@@ -278,32 +266,22 @@ public class MainMenuController {
     private void fetchAndAddMovieByTitle(String title) {
         CompletableFuture.runAsync(() -> {
             try {
-                JsonObject movieData = omdbService.GetMovieByTitle(title);
-                Movie firebaseMovie = null;
+                JsonObject result = tmdbService.searchMovies(title);
+                if (result.has("results") && result.getAsJsonArray("results").size() > 0) {
+                    JsonObject firstMatch = result.getAsJsonArray("results").get(0).getAsJsonObject();
+                    Movie tmdbMovie = new Movie(firstMatch);
 
-                if (movieData != null && movieData.has("imdbID")) {
-                    // HYBRID LOAD: Check Firebase for ratings
-                    String imdbID = movieData.get("imdbID").getAsString();
-                    firebaseMovie = firebaseService.getMovie(imdbID);
+                    Movie firebaseMovie = firebaseService.getMovie(tmdbMovie.getMovieId());
+                    Platform.runLater(() -> addMovieToGrid(tmdbMovie, firebaseMovie));
                 }
-
-                final Movie fbMovie = firebaseMovie;
-                Platform.runLater(() -> addMovieToGrid(movieData, fbMovie));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
 
-    // UPDATED: Now accepts firebaseMovie data to calculate rating
-    private void addMovieToGrid(JsonObject movieData, Movie firebaseMovie) {
-        if (movieData != null && movieData.has("Title")) {
-            String title = movieData.get("Title").getAsString();
-            String posterUrl = "N/A";
-            if (movieData.has("Poster")) {
-                posterUrl = movieData.get("Poster").getAsString();
-            }
-
+    private void addMovieToGrid(Movie tmdbMovie, Movie firebaseMovie) {
+        if (tmdbMovie != null) {
             // --- HYBRID RATING LOGIC ---
             int rating = 0;
 
@@ -311,54 +289,43 @@ public class MainMenuController {
                 // Priority: Use Community Rating
                 double avg = firebaseMovie.getRatingTotal() / (double) firebaseMovie.getRatingCount();
                 rating = (int) Math.round(avg);
-            } else {
-                // Fallback: Use OMDB Rating
-                if (movieData.has("imdbRating") && !movieData.get("imdbRating").getAsString().equals("N/A")) {
-                    try {
-                        double imdbScore = movieData.get("imdbRating").getAsDouble();
-                        rating = (int) Math.round(imdbScore / 2.0);
-                    } catch (NumberFormatException e) {}
-                }
             }
+            // Optional: If no community rating, you could use TMDB's 'vote_average' (0-10) scaled to 0-5
+            // But usually we leave it as 0 stars if no user has reviewed it yet.
 
-            String movieId = "";
-            if (movieData.has("imdbID")) {
-                movieId = movieData.get("imdbID").getAsString();
-            }
-
-            VBox card = createMovieCard(movieId, title, posterUrl, rating);
+            VBox card = createMovieCard(tmdbMovie, rating);
             movieGrid.getChildren().add(card);
         }
     }
 
-    private VBox createMovieCard(String movieId, String title, String posterUrl, int rating) {
+    private VBox createMovieCard(Movie movie, int rating) {
         VBox card = new VBox();
         card.getStyleClass().add("movie-card");
-        Image image;
-        if (posterUrl == null || posterUrl.equals("N/A")) {
+
+        ImageView poster = new ImageView();
+        String posterUrl = movie.getPosterPic();
+
+        if (posterUrl == null || posterUrl.equals("N/A") || posterUrl.isEmpty()) {
             try {
-                image = new Image(MainApplication.class.getResource("poster_not_found.png").toExternalForm());
-            } catch (Exception e) {
-                image = null;
-            }
+                poster.setImage(new Image(MainApplication.class.getResource("poster_not_found.png").toExternalForm()));
+            } catch (Exception e) {}
         } else {
-            image = new Image(posterUrl, true);
+            poster.setImage(new Image(posterUrl, true));
         }
-        ImageView poster = new ImageView(image);
+
         poster.setFitWidth(180);
         poster.setFitHeight(270);
-        if (image == null) {
-            poster.setFitWidth(180);
-            poster.setFitHeight(270);
-        }
         poster.setPreserveRatio(true);
         poster.getStyleClass().add("movie-poster");
-        Label titleLabel = new Label(title);
+
+        Label titleLabel = new Label(movie.getName());
         titleLabel.getStyleClass().add("movie-title");
         titleLabel.setWrapText(true);
         titleLabel.setMaxWidth(180);
+
         Label ratingText = new Label("Average Rating");
         ratingText.getStyleClass().add("rating-label");
+
         HBox stars = new HBox();
         stars.getStyleClass().add("star-container");
         String starPath = "M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z";
@@ -382,12 +349,12 @@ public class MainMenuController {
                 }
 
                 MovieDetailsController controller = fxmlLoader.getController();
-                controller.setMovieData(movieId);
+                controller.setMovieData(movie.getMovieId()); // TMDB ID
                 controller.setUserData(this.user);
 
                 Stage stage = (Stage) welcomeLabel.getScene().getWindow();
                 stage.setScene(scene);
-                stage.setTitle(title + " - Details");
+                stage.setTitle(movie.getName() + " - Details");
                 stage.show();
             } catch (IOException ex) {
                 ex.printStackTrace();

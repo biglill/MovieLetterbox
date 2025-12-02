@@ -1,73 +1,105 @@
 package movieLetterbox.model;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class Movie {
     private String movieId;
     private String name;
     private int year;
-    private String ageRating;
+    private String ageRating; // TMDB doesn't always provide certification in basic details
     private String release;
     private String runtime;
     private String genre;
     private String plot;
     private String language;
     private String country;
-    private String rewards;
+    private String rewards; // TMDB doesn't provide awards info
     private String posterPic;
     private int favoriteCount;
     private int ratingCount;
     private double ratingTotal;
 
+    // TMDB Image Base URL
+    private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
+
     public Movie() {}
 
-    public Movie(
-            String movieId,
-            String name,
-            int year,
-            String ageRating,
-            String release,
-            String runtime,
-            String genre,
-            String plot,
-            String language,
-            String country,
-            String rewards,
-            String posterPic,
-            int favoriteCount,
-            int ratingCount,
-            double ratingTotal
-    ) {
+    // Constructor for Manual Creation
+    public Movie(String movieId, String name, int year, String posterPic) {
         this.movieId = movieId;
         this.name = name;
         this.year = year;
-        this.ageRating = ageRating;
-        this.release = release;
-        this.runtime = runtime;
-        this.genre = genre;
-        this.plot = plot;
-        this.language = language;
-        this.country = country;
-        this.rewards = rewards;
         this.posterPic = posterPic;
-        this.favoriteCount = favoriteCount;
-        this.ratingCount = ratingCount;
-        this.ratingTotal = ratingTotal;
     }
 
+    // Constructor for TMDB JSON
     public Movie(JsonObject json) {
-        this.movieId = json.get("imdbID").getAsString();
-        this.name = json.get("Title").getAsString();
-        this.year = json.get("Year").getAsInt();
-        this.ageRating = json.get("Rated").getAsString();
-        this.release = json.get("Released").getAsString();
-        this.runtime = json.get("Runtime").getAsString();
-        this.genre = json.get("Genre").getAsString();
-        this.plot = json.get("Plot").getAsString();
-        this.language = json.get("Language").getAsString();
-        this.country = json.get("Country").getAsString();
-        this.rewards = json.get("Awards").getAsString();
-        this.posterPic = json.get("Poster").getAsString();
+        // Handle ID (supports both search results and detail results)
+        if (json.has("id")) {
+            this.movieId = String.valueOf(json.get("id").getAsInt());
+        }
+
+        // Title
+        this.name = json.has("title") ? json.get("title").getAsString() : "Unknown Title";
+
+        // Year / Release Date
+        if (json.has("release_date") && !json.get("release_date").getAsString().isEmpty()) {
+            String date = json.get("release_date").getAsString(); // Format: YYYY-MM-DD
+            this.release = date;
+            try {
+                this.year = Integer.parseInt(date.substring(0, 4));
+            } catch (Exception e) {
+                this.year = 0;
+            }
+        } else {
+            this.year = 0;
+            this.release = "N/A";
+        }
+
+        // Poster
+        if (json.has("poster_path") && !json.get("poster_path").isJsonNull()) {
+            this.posterPic = IMAGE_BASE_URL + json.get("poster_path").getAsString();
+        } else {
+            this.posterPic = "N/A";
+        }
+
+        // Plot / Overview
+        this.plot = json.has("overview") ? json.get("overview").getAsString() : "No description available.";
+
+        // Runtime (Only available in Details endpoint, not Search)
+        if (json.has("runtime") && !json.get("runtime").isJsonNull()) {
+            this.runtime = json.get("runtime").getAsInt() + " min";
+        } else {
+            this.runtime = "N/A";
+        }
+
+        // Genre (In details, it's an array of objects. In search, it's an array of IDs - simplified here)
+        if (json.has("genres")) {
+            JsonArray genres = json.getAsJsonArray("genres");
+            List<String> genreList = new ArrayList<>();
+            for (JsonElement g : genres) {
+                genreList.add(g.getAsJsonObject().get("name").getAsString());
+            }
+            this.genre = String.join(", ", genreList);
+        } else {
+            this.genre = "N/A";
+        }
+
+        // Rating (Vote Average)
+        // TMDB gives 0-10. We can map this if needed, or store it.
+        // Note: This model stores Community Rating, not TMDB rating, in ratingTotal.
+
+        // Default / Missing Fields
+        this.language = json.has("original_language") ? json.get("original_language").getAsString() : "en";
+        this.country = "N/A";
+        this.rewards = "N/A";
+        this.ageRating = "N/A";
+
         this.favoriteCount = 0;
         this.ratingCount = 0;
         this.ratingTotal = 0;
@@ -117,25 +149,4 @@ public class Movie {
 
     public double getRatingTotal() { return ratingTotal; }
     public void setRatingTotal(double ratingTotal) { this.ratingTotal = ratingTotal; }
-
-    @Override
-    public String toString() {
-        return "Movie{" +
-                "movieId=" + movieId +
-                ", name='" + name + '\'' +
-                ", year=" + year +
-                ", ageRating='" + ageRating + '\'' +
-                ", release='" + release + '\'' +
-                ", runtime=" + runtime +
-                ", genre='" + genre + '\'' +
-                ", plot='" + plot + '\'' +
-                ", language='" + language + '\'' +
-                ", country='" + country + '\'' +
-                ", rewards='" + rewards + '\'' +
-                ", posterPic='" + posterPic + '\'' +
-                ", favoriteCount=" + favoriteCount +
-                ", ratingCount=" + ratingCount +
-                ", ratingTotal=" + ratingTotal +
-                '}';
-    }
 }

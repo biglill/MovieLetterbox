@@ -1,7 +1,5 @@
 package movieLetterbox;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -9,14 +7,13 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import movieLetterbox.service.FirebaseService;
 import movieLetterbox.service.MovieService;
-import movieLetterbox.service.OmdbService;
+import movieLetterbox.service.TmdbService;
 
 import java.io.IOException;
 
-
 public class MainApplication extends Application {
     public static FirebaseService firebaseService;
-    public static OmdbService omdbService;
+    public static TmdbService tmdbService; // CHANGED
     public static MovieService movieService;
 
     // Defined constants for uniform window size across the application
@@ -44,16 +41,14 @@ public class MainApplication extends Application {
             return;
         }
 
-        omdbService = new OmdbService();
+        tmdbService = new TmdbService(); // CHANGED
         movieService = new MovieService();
 
         FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("login.fxml"));
-        // Use constants for size
         Scene scene = new Scene(fxmlLoader.load(), WINDOW_WIDTH, WINDOW_HEIGHT);
         scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
         stage.setTitle("MovieLetterbox");
         stage.setScene(scene);
         stage.show();
-
     }
 }

@@ -9,7 +9,6 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
@@ -24,7 +23,7 @@ import movieLetterbox.model.Movie;
 import movieLetterbox.model.Review;
 import movieLetterbox.model.User;
 import movieLetterbox.service.FirebaseService;
-import movieLetterbox.service.OmdbService;
+import movieLetterbox.service.TmdbService;
 
 import java.io.IOException;
 import java.util.List;
@@ -38,18 +37,14 @@ public class MovieDetailsController {
     @FXML private TextArea userReviewArea;
     @FXML private Label descriptionLabel;
     @FXML private VBox reviewsContainer;
-
-    // NEW: Heart Icon
     @FXML private SVGPath favoriteHeartIcon;
 
     private User currentUser;
     private Movie currentMovie;
     private int currentRating = 0;
-
-    // To track if we are updating an existing review or creating a new one
     private Review existingUserReview = null;
 
-    private final OmdbService omdbService = new OmdbService();
+    private final TmdbService tmdbService = MainApplication.tmdbService;
     private final FirebaseService firebaseService = MainApplication.firebaseService;
 
     public void setUserData(User user) {
@@ -61,7 +56,8 @@ public class MovieDetailsController {
 
         CompletableFuture.runAsync(() -> {
             try {
-                JsonObject json = omdbService.GetMovieByID(movieId);
+                // Fetch full details from TMDB
+                JsonObject json = tmdbService.getMovieById(movieId);
                 this.currentMovie = new Movie(json);
 
                 Platform.runLater(() -> {
@@ -69,9 +65,7 @@ public class MovieDetailsController {
                     loadReviews(movieId);
 
                     if (currentUser != null) {
-                        // 1. Check if reviewed previously to preload data
                         checkUserReviewStatus(movieId);
-                        // 2. Check if favorite to color the heart
                         updateFavoriteIcon();
                     }
                 });
@@ -79,65 +73,6 @@ public class MovieDetailsController {
             } catch (Exception e) {
                 e.printStackTrace();
                 Platform.runLater(() -> movieTitleLabel.setText("Error loading movie."));
-            }
-        });
-    }
-
-    // NEW: Handle Heart Click
-    @FXML
-    void handleToggleFavorite(MouseEvent event) {
-        if (currentUser == null || currentMovie == null) return;
-
-        boolean isFav = isMovieFavorite();
-
-        if (isFav) {
-            // Remove
-            firebaseService.removeFavorite(currentUser, currentMovie.getMovieId());
-        } else {
-            // Add
-            firebaseService.addFavorite(currentUser, currentMovie.getMovieId());
-        }
-
-        // Update UI immediately (state is already updated in user object by service)
-        updateFavoriteIcon();
-    }
-
-    private boolean isMovieFavorite() {
-        if (currentUser.getFavorites() == null) return false;
-        return currentUser.getFavorites().contains(currentMovie.getMovieId());
-    }
-
-    private void updateFavoriteIcon() {
-        if (favoriteHeartIcon == null) return;
-
-        favoriteHeartIcon.getStyleClass().removeAll("heart-empty", "heart-filled");
-
-        if (isMovieFavorite()) {
-            favoriteHeartIcon.getStyleClass().add("heart-filled");
-        } else {
-            favoriteHeartIcon.getStyleClass().add("heart-empty");
-        }
-    }
-
-    /**
-     * Fetches the specific review for the current user to preload UI
-     */
-    private void checkUserReviewStatus(String movieId) {
-        CompletableFuture.runAsync(() -> {
-            Review review = firebaseService.getUserReview(movieId, currentUser.getUserId());
-
-            if (review != null) {
-                existingUserReview = review;
-                Platform.runLater(() -> {
-                    // Preload the star rating
-                    currentRating = review.getRating();
-                    updateStarVisuals(currentRating);
-
-                    // Preload the text review
-                    userReviewArea.setText(review.getReviewText());
-
-                    System.out.println("Loaded existing review for user.");
-                });
             }
         });
     }
@@ -151,6 +86,47 @@ public class MovieDetailsController {
         }
     }
 
+    @FXML
+    void handleToggleFavorite(MouseEvent event) {
+        if (currentUser == null || currentMovie == null) return;
+        boolean isFav = isMovieFavorite();
+        if (isFav) {
+            firebaseService.removeFavorite(currentUser, currentMovie.getMovieId());
+        } else {
+            firebaseService.addFavorite(currentUser, currentMovie.getMovieId());
+        }
+        updateFavoriteIcon();
+    }
+
+    private boolean isMovieFavorite() {
+        if (currentUser.getFavorites() == null) return false;
+        return currentUser.getFavorites().contains(currentMovie.getMovieId());
+    }
+
+    private void updateFavoriteIcon() {
+        if (favoriteHeartIcon == null) return;
+        favoriteHeartIcon.getStyleClass().removeAll("heart-empty", "heart-filled");
+        if (isMovieFavorite()) {
+            favoriteHeartIcon.getStyleClass().add("heart-filled");
+        } else {
+            favoriteHeartIcon.getStyleClass().add("heart-empty");
+        }
+    }
+
+    private void checkUserReviewStatus(String movieId) {
+        CompletableFuture.runAsync(() -> {
+            Review review = firebaseService.getUserReview(movieId, currentUser.getUserId());
+            if (review != null) {
+                existingUserReview = review;
+                Platform.runLater(() -> {
+                    currentRating = review.getRating();
+                    updateStarVisuals(currentRating);
+                    userReviewArea.setText(review.getReviewText());
+                });
+            }
+        });
+    }
+
     private void loadReviews(String movieId) {
         CompletableFuture.runAsync(() -> {
             List<Review> reviews = firebaseService.getReviews(movieId);
@@ -160,7 +136,6 @@ public class MovieDetailsController {
 
     private void populateReviews(List<Review> reviews) {
         reviewsContainer.getChildren().clear();
-
         for (Review r : reviews) {
             VBox reviewBox = new VBox();
             reviewBox.getStyleClass().add("content-box");
@@ -189,9 +164,8 @@ public class MovieDetailsController {
     void handleSetRating(MouseEvent event) {
         Node source = (Node) event.getSource();
         int index = ratingStarContainer.getChildren().indexOf(source);
-
         if (index != -1) {
-            currentRating = index + 1; // 0-indexed to 1-5 rating
+            currentRating = index + 1;
             updateStarVisuals(currentRating);
         }
     }
@@ -227,15 +201,10 @@ public class MovieDetailsController {
             showAlert("Missing Rating", "Please click a star to rate the movie.");
             return;
         }
-
         String text = userReviewArea.getText();
         if (text.isBlank()) {
             showAlert("Missing Review", "Please write a review.");
             return;
-        }
-
-        if (existingUserReview != null) {
-            showAlert("Update Info", "We are saving this as a new entry. (Update logic pending)");
         }
 
         Review newReview = new Review(
@@ -268,24 +237,19 @@ public class MovieDetailsController {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
             Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
-
             if (MainApplication.class.getResource("Style.css") != null) {
                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
             }
-
             MainMenuController controller = fxmlLoader.getController();
             if (currentUser != null) {
                 controller.setUserData(currentUser);
             }
-
             Stage stage = (Stage) movieTitleLabel.getScene().getWindow();
             stage.setScene(scene);
             stage.setTitle("Main Menu");
             stage.show();
-
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Failed to return to main menu.");
         }
     }
 }
