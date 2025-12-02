@@ -1,5 +1,6 @@
 package movieLetterbox.controller;
 
+import javafx.application.Platform;
 import movieLetterbox.service.FirebaseService;
 import movieLetterbox.MainApplication;
 import movieLetterbox.model.User;
@@ -27,6 +28,7 @@ import javafx.scene.shape.Circle;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public class HelloController {
@@ -49,7 +51,6 @@ public class HelloController {
     @FXML private TextField signUpPhoneField;
     @FXML private PasswordField signUpConfirmPasswordField;
 
-    // NEW: Bio Field
     @FXML private TextArea signUpBioArea;
 
     @FXML private ImageView profileImageView;
@@ -65,14 +66,12 @@ public class HelloController {
     public void initialize() {
         firebaseService = MainApplication.firebaseService;
 
-        // --- 1. SETUP CIRCULAR CROP ---
         if (imageCropContainer != null) {
             Circle clip = new Circle(50);
             clip.setCenterX(50);
             clip.setCenterY(50);
             imageCropContainer.setClip(clip);
 
-            // --- 2. SETUP DRAG (PAN) LOGIC ---
             imageCropContainer.setOnMousePressed(e -> {
                 startX = e.getSceneX();
                 startY = e.getSceneY();
@@ -88,7 +87,6 @@ public class HelloController {
             });
         }
 
-        // --- 3. SETUP ZOOM LOGIC ---
         if (zoomSlider != null) {
             zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
                 profileImageView.setScaleX(newVal.doubleValue());
@@ -112,49 +110,57 @@ public class HelloController {
             return;
         }
 
-        try {
-            User user = firebaseService.getUserByUsername(username);
+        feedbackLabel.setText("Signing in..."); // Show loading state
 
-            if (user == null) {
-                feedbackLabel.setText("Sign-in failed: User not found.");
-                return;
-            }
+        // RUN ASYNC to prevent UI Freeze
+        CompletableFuture.runAsync(() -> {
+            try {
+                User user = firebaseService.getUserByUsername(username);
 
-            String storedPassword = user.getPassword();
-
-            if (password.equals(storedPassword)) {
-                try {
-                    FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
-                    // Use constants from MainApplication
-                    Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
-
-                    if (MainApplication.class.getResource("Style.css") != null) {
-                        scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                Platform.runLater(() -> {
+                    if (user == null) {
+                        feedbackLabel.setText("Sign-in failed: User not found.");
+                        return;
                     }
 
-                    MainMenuController controller = fxmlLoader.getController();
-                    controller.setUserData(user);
+                    String storedPassword = user.getPassword();
 
-                    Stage stage = (Stage) signInPane.getScene().getWindow();
-                    stage.setScene(scene);
-                    stage.setTitle("Main Menu");
-                    stage.show();
+                    if (password.equals(storedPassword)) {
+                        try {
+                            FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
+                            Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
 
-                } catch (IOException e) {
-                    System.err.println("Failed to load main menu screen.");
-                    e.printStackTrace();
-                    feedbackLabel.setText("Login successful, but failed to load main menu.");
-                }
+                            if (MainApplication.class.getResource("Style.css") != null) {
+                                scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                            }
 
-            } else {
-                feedbackLabel.setText("Sign-in failed: Incorrect password.");
+                            MainMenuController controller = fxmlLoader.getController();
+                            controller.setUserData(user);
+
+                            Stage stage = (Stage) signInPane.getScene().getWindow();
+                            stage.setScene(scene);
+                            stage.setTitle("Main Menu");
+                            stage.show();
+
+                        } catch (IOException e) {
+                            System.err.println("Failed to load main menu screen.");
+                            e.printStackTrace();
+                            feedbackLabel.setText("Login successful, but failed to load main menu.");
+                        }
+
+                    } else {
+                        feedbackLabel.setText("Sign-in failed: Incorrect password.");
+                    }
+                });
+
+            } catch (ExecutionException | InterruptedException e) {
+                System.err.println("Error during sign-in process.");
+                Platform.runLater(() -> {
+                    feedbackLabel.setText("Error: Could not sign in. See console for details.");
+                });
+                e.printStackTrace();
             }
-
-        } catch (ExecutionException | InterruptedException e) {
-            System.err.println("Error during sign-in process.");
-            feedbackLabel.setText("Error: Could not sign in. See console for details.");
-            e.printStackTrace();
-        }
+        });
     }
 
     @FXML
@@ -171,7 +177,7 @@ public class HelloController {
         String username = signUpUsernameField.getText();
         String age = signUpAgeField.getText();
         String phone = signUpPhoneField.getText();
-        String bio = signUpBioArea.getText(); // Get bio text
+        String bio = signUpBioArea.getText();
 
         if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() ||
                 username.isBlank() || age.isBlank() || phone.isBlank()) {
@@ -184,6 +190,8 @@ public class HelloController {
             return;
         }
 
+        feedbackLabel.setText("Creating account..."); // Loading state
+
         User newUser = new User();
         newUser.setName(name);
         newUser.setEmail(email);
@@ -191,42 +199,64 @@ public class HelloController {
         newUser.setUsername(username);
         newUser.setAge(age);
         newUser.setPhone(phone);
-        newUser.setBio(bio); // Set the bio
+        newUser.setBio(bio);
         newUser.setProfilePhotoUrl(null);
 
-        try {
-            String newUserId = firebaseService.saveUserDetails(newUser);
-            System.out.println("Successfully saved user data with ID: " + newUserId);
+        // RUN ASYNC
+        CompletableFuture.runAsync(() -> {
+            try {
+                String newUserId = firebaseService.saveUserDetails(newUser);
+                System.out.println("Successfully saved user data with ID: " + newUserId);
 
-            if (profileImageView.getImage() != null && selectedPhotoFile != null) {
-                try {
-                    SnapshotParameters params = new SnapshotParameters();
-                    params.setFill(Color.TRANSPARENT);
-                    var croppedImage = imageCropContainer.snapshot(params, null);
+                if (profileImageView.getImage() != null && selectedPhotoFile != null) {
+                    try {
+                        // Snapshot must be on UI thread
+                        final File[] tempFileContainer = {null};
 
-                    File tempFile = File.createTempFile("profile_crop", ".png");
-                    ImageIO.write(SwingFXUtils.fromFXImage(croppedImage, null), "png", tempFile);
+                        // We need to wait for the UI operation to finish before uploading
+                        CompletableFuture<Void> snapshotFuture = new CompletableFuture<>();
 
-                    firebaseService.uploadProfilePhoto(tempFile, newUserId);
-                    System.out.println("Photo uploaded and linked successfully.");
+                        Platform.runLater(() -> {
+                            try {
+                                SnapshotParameters params = new SnapshotParameters();
+                                params.setFill(Color.TRANSPARENT);
+                                var croppedImage = imageCropContainer.snapshot(params, null);
 
-                    tempFile.delete();
+                                File tempFile = File.createTempFile("profile_crop", ".png");
+                                ImageIO.write(SwingFXUtils.fromFXImage(croppedImage, null), "png", tempFile);
+                                tempFileContainer[0] = tempFile;
+                                snapshotFuture.complete(null);
+                            } catch (Exception ex) {
+                                snapshotFuture.completeExceptionally(ex);
+                            }
+                        });
 
-                } catch (Exception e) {
-                    System.err.println("Error uploading photo: " + e.getMessage());
-                    e.printStackTrace();
-                    feedbackLabel.setText("Account created, but photo upload failed. See console.");
+                        snapshotFuture.join(); // Wait for snapshot
+
+                        if (tempFileContainer[0] != null) {
+                            firebaseService.uploadProfilePhoto(tempFileContainer[0], newUserId);
+                            System.out.println("Photo uploaded and linked successfully.");
+                            tempFileContainer[0].delete();
+                        }
+
+                    } catch (Exception e) {
+                        System.err.println("Error uploading photo: " + e.getMessage());
+                        e.printStackTrace();
+                        Platform.runLater(() -> feedbackLabel.setText("Account created, but photo upload failed."));
+                    }
                 }
+
+                Platform.runLater(() -> {
+                    feedbackLabel.setText("Account created successfully! Please sign in.");
+                    showSignInPane(null);
+                });
+
+            } catch (ExecutionException | InterruptedException e) {
+                System.err.println("Error saving user data to Firestore.");
+                Platform.runLater(() -> feedbackLabel.setText("Error: Could not create account."));
+                e.printStackTrace();
             }
-
-            feedbackLabel.setText("Account created successfully! Please sign in.");
-            showSignInPane(null);
-
-        } catch (ExecutionException | InterruptedException e) {
-            System.err.println("Error saving user data to Firestore.");
-            feedbackLabel.setText("Error: Could not create account. See console for details.");
-            e.printStackTrace();
-        }
+        });
     }
 
     @FXML
@@ -286,7 +316,7 @@ public class HelloController {
         signUpUsernameField.clear();
         signUpAgeField.clear();
         signUpPhoneField.clear();
-        signUpBioArea.clear(); // Clear bio
+        signUpBioArea.clear();
 
         selectedPhotoFile = null;
         profilePhotoLabel.setText("No photo selected.");
