@@ -45,12 +45,8 @@ public class MainMenuController {
     private final TmdbService tmdbService = MainApplication.tmdbService;
     private final FirebaseService firebaseService = MainApplication.firebaseService;
 
-    // TMDB requires queries, but we can default to searching a few popular titles
-    private final String[] RECENT_MOVIES = {
-            "Dune", "Civil War", "The Fall Guy", "Challengers",
-            "Kingdom of the Planet of the Apes", "Godzilla",
-            "Furiosa", "Kung Fu Panda 4", "Inside Out 2"
-    };
+    // OLD: Removed hardcoded list
+    // private final String[] RECENT_MOVIES = { ... };
 
     public void setUserData(User user) {
         this.user = user;
@@ -204,10 +200,47 @@ public class MainMenuController {
     // --- MOVIE SEARCH LOGIC (UPDATED FOR TMDB) ---
     private void loadDashboardMovies() {
         movieGrid.getChildren().clear();
-        for (String title : RECENT_MOVIES) {
-            // In TMDB, we search for the movie and take the first result
-            fetchAndAddMovieByTitle(title);
-        }
+        Label loadingLabel = new Label("Loading Trending Movies...");
+        loadingLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+        movieGrid.getChildren().add(loadingLabel);
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                // CHANGED: Use new getTrendingMovies method
+                JsonObject result = tmdbService.getTrendingMovies();
+
+                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel));
+
+                if (result != null && result.has("results")) {
+                    JsonArray results = result.getAsJsonArray("results");
+
+                    // Limit to top 10
+                    int count = 0;
+                    for (JsonElement element : results) {
+                        if (count >= 10) break;
+
+                        Movie tmdbMovie = new Movie(element.getAsJsonObject());
+
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                Movie firebaseMovie = firebaseService.getMovie(tmdbMovie.getMovieId());
+                                Platform.runLater(() -> addMovieToGrid(tmdbMovie, firebaseMovie));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        count++;
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    movieGrid.getChildren().remove(loadingLabel);
+                    Label err = new Label("Failed to load trending movies.");
+                    movieGrid.getChildren().add(err);
+                });
+            }
+        });
     }
 
     private void searchMovies(String query) {
@@ -263,22 +296,7 @@ public class MainMenuController {
         });
     }
 
-    private void fetchAndAddMovieByTitle(String title) {
-        CompletableFuture.runAsync(() -> {
-            try {
-                JsonObject result = tmdbService.searchMovies(title);
-                if (result.has("results") && result.getAsJsonArray("results").size() > 0) {
-                    JsonObject firstMatch = result.getAsJsonArray("results").get(0).getAsJsonObject();
-                    Movie tmdbMovie = new Movie(firstMatch);
-
-                    Movie firebaseMovie = firebaseService.getMovie(tmdbMovie.getMovieId());
-                    Platform.runLater(() -> addMovieToGrid(tmdbMovie, firebaseMovie));
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
+    // Removed fetchAndAddMovieByTitle as it's no longer used for dashboard loading
 
     private void addMovieToGrid(Movie tmdbMovie, Movie firebaseMovie) {
         if (tmdbMovie != null) {

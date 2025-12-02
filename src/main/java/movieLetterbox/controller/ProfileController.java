@@ -33,8 +33,10 @@ import movieLetterbox.service.TmdbService;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 public class ProfileController {
 
@@ -312,18 +314,49 @@ public class ProfileController {
             favoritesContainer.getChildren().add(placeholder);
             return;
         }
+
+        // List to hold all async tasks
+        List<CompletableFuture<Movie>> futures = new ArrayList<>();
+
         for (String movieId : profileUser.getFavorites()) {
-            CompletableFuture.runAsync(() -> {
+            futures.add(CompletableFuture.supplyAsync(() -> {
                 try {
-                    // Use TMDB to get details for favorites
                     JsonObject json = tmdbService.getMovieById(movieId);
-                    Movie movie = new Movie(json);
-                    Platform.runLater(() -> favoritesContainer.getChildren().add(createFavoriteCard(movie)));
+                    return new Movie(json);
                 } catch (Exception e) {
                     e.printStackTrace();
+                    return null;
                 }
-            });
+            }));
         }
+
+        // Wait for all to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]))
+                .thenAccept(v -> {
+                    List<Movie> movies = new ArrayList<>();
+                    for (CompletableFuture<Movie> f : futures) {
+                        try {
+                            Movie m = f.get();
+                            if (m != null) movies.add(m);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    // Sort: Rating Descending.
+                    // Java's Sort is stable, so equal ratings preserve insertion order (Time Favorited).
+                    movies.sort((m1, m2) -> Double.compare(m2.getTmdbRating(), m1.getTmdbRating()));
+
+                    // Limit to Top 5
+                    List<Movie> top5 = movies.stream().limit(5).collect(Collectors.toList());
+
+                    Platform.runLater(() -> {
+                        favoritesContainer.getChildren().clear();
+                        for (Movie movie : top5) {
+                            favoritesContainer.getChildren().add(createFavoriteCard(movie));
+                        }
+                    });
+                });
     }
 
     private VBox createFavoriteCard(Movie movie) {

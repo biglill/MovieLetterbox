@@ -23,6 +23,7 @@ public class Movie {
     private int favoriteCount;
     private int ratingCount;
     private double ratingTotal;
+    private double tmdbRating; // NEW: Store TMDB Rating
 
     // TMDB Image Base URL
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
@@ -91,8 +92,8 @@ public class Movie {
         }
 
         // Rating (Vote Average)
-        // TMDB gives 0-10. We can map this if needed, or store it.
-        // Note: This model stores Community Rating, not TMDB rating, in ratingTotal.
+        // Parse TMDB rating (0-10)
+        this.tmdbRating = json.has("vote_average") ? json.get("vote_average").getAsDouble() : 0.0;
 
         // Default / Missing Fields
         this.language = json.has("original_language") ? json.get("original_language").getAsString() : "en";
@@ -149,4 +150,7 @@ public class Movie {
 
     public double getRatingTotal() { return ratingTotal; }
     public void setRatingTotal(double ratingTotal) { this.ratingTotal = ratingTotal; }
+
+    public double getTmdbRating() { return tmdbRating; }
+    public void setTmdbRating(double tmdbRating) { this.tmdbRating = tmdbRating; }
 }
