@@ -127,10 +127,17 @@ public class MainMenuController {
     // --- USER SEARCH LOGIC ---
     private void searchUsers(String query) {
         movieGrid.getChildren().clear();
+
+        // Add loading indicator
+        Label loadingLabel = new Label("Searching users...");
+        loadingLabel.setStyle("-fx-font-size: 16px; -fx-text-fill: #555;");
+        movieGrid.getChildren().add(loadingLabel);
+
         CompletableFuture.runAsync(() -> {
             try {
                 List<User> users = firebaseService.searchUsers(query);
                 Platform.runLater(() -> {
+                    movieGrid.getChildren().clear(); // Clear loading
                     if (users.isEmpty()) {
                         Label noRes = new Label("No users found.");
                         noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
@@ -143,6 +150,12 @@ public class MainMenuController {
                 });
             } catch (Exception e) {
                 e.printStackTrace();
+                Platform.runLater(() -> {
+                    movieGrid.getChildren().clear();
+                    Label err = new Label("Error searching users.");
+                    err.setStyle("-fx-text-fill: red;");
+                    movieGrid.getChildren().add(err);
+                });
             }
         });
     }
@@ -206,25 +219,47 @@ public class MainMenuController {
 
     private void searchMovies(String query) {
         movieGrid.getChildren().clear();
+
+        // Show loading state
+        Label loadingLabel = new Label("Searching movies...");
+        loadingLabel.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+        movieGrid.getChildren().add(loadingLabel);
+
         CompletableFuture.runAsync(() -> {
             try {
                 JsonObject searchResult = omdbService.SearchMovie(query);
+
+                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel)); // Remove loading label
+
                 if (searchResult != null && searchResult.has("Response")
                         && "True".equalsIgnoreCase(searchResult.get("Response").getAsString())) {
+
                     JsonArray searchList = searchResult.getAsJsonArray("Search");
+
+                    // IMPROVEMENT: Parallelize details fetching
+                    // Instead of a simple for-loop that waits for each request,
+                    // we spawn a new async task for every movie found.
                     for (JsonElement element : searchList) {
-                        JsonObject simpleMovie = element.getAsJsonObject();
-                        if (simpleMovie.has("imdbID")) {
-                            String imdbID = simpleMovie.get("imdbID").getAsString();
-                            JsonObject fullMovie = omdbService.GetMovieByID(imdbID);
+                        CompletableFuture.runAsync(() -> {
+                            try {
+                                JsonObject simpleMovie = element.getAsJsonObject();
+                                if (simpleMovie.has("imdbID")) {
+                                    String imdbID = simpleMovie.get("imdbID").getAsString();
 
-                            // HYBRID LOAD: Check Firebase for ratings
-                            Movie firebaseMovie = firebaseService.getMovie(imdbID);
+                                    // 1. Fetch full OMDB Details
+                                    JsonObject fullMovie = omdbService.GetMovieByID(imdbID);
 
-                            Platform.runLater(() -> {
-                                addMovieToGrid(fullMovie, firebaseMovie);
-                            });
-                        }
+                                    // 2. HYBRID LOAD: Fetch Firebase Ratings
+                                    Movie firebaseMovie = firebaseService.getMovie(imdbID);
+
+                                    Platform.runLater(() -> {
+                                        addMovieToGrid(fullMovie, firebaseMovie);
+                                    });
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        });
                     }
                 } else {
                     Platform.runLater(() -> {
@@ -235,6 +270,7 @@ public class MainMenuController {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel));
             }
         });
     }
