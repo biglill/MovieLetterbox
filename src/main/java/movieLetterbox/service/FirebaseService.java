@@ -227,6 +227,15 @@ public class FirebaseService {
 
     // --- MOVIE & REVIEW METHODS ---
 
+    // NEW: Get a movie document to check community stats
+    public Movie getMovie(String movieId) throws ExecutionException, InterruptedException {
+        DocumentSnapshot document = db.collection("movies").document(movieId).get().get();
+        if (document.exists()) {
+            return document.toObject(Movie.class);
+        }
+        return null;
+    }
+
     public void addReview(Movie movie, Review review) {
         DocumentReference movieRef = db.collection("movies").document(movie.getMovieId());
         try {

@@ -4,7 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
-import javafx.event.ActionEvent; // NEW: Added import
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -22,6 +22,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import movieLetterbox.MainApplication;
+import movieLetterbox.model.Movie; // NEW: Added Import
 import movieLetterbox.model.User;
 import movieLetterbox.service.FirebaseService;
 import movieLetterbox.service.OmdbService;
@@ -216,8 +217,12 @@ public class MainMenuController {
                         if (simpleMovie.has("imdbID")) {
                             String imdbID = simpleMovie.get("imdbID").getAsString();
                             JsonObject fullMovie = omdbService.GetMovieByID(imdbID);
+
+                            // HYBRID LOAD: Check Firebase for ratings
+                            Movie firebaseMovie = firebaseService.getMovie(imdbID);
+
                             Platform.runLater(() -> {
-                                addMovieToGrid(fullMovie);
+                                addMovieToGrid(fullMovie, firebaseMovie);
                             });
                         }
                     }
@@ -238,26 +243,45 @@ public class MainMenuController {
         CompletableFuture.runAsync(() -> {
             try {
                 JsonObject movieData = omdbService.GetMovieByTitle(title);
-                Platform.runLater(() -> addMovieToGrid(movieData));
+                Movie firebaseMovie = null;
+
+                if (movieData != null && movieData.has("imdbID")) {
+                    // HYBRID LOAD: Check Firebase for ratings
+                    String imdbID = movieData.get("imdbID").getAsString();
+                    firebaseMovie = firebaseService.getMovie(imdbID);
+                }
+
+                final Movie fbMovie = firebaseMovie;
+                Platform.runLater(() -> addMovieToGrid(movieData, fbMovie));
             } catch (Exception e) {
                 e.printStackTrace();
             }
         });
     }
 
-    private void addMovieToGrid(JsonObject movieData) {
+    // UPDATED: Now accepts firebaseMovie data to calculate rating
+    private void addMovieToGrid(JsonObject movieData, Movie firebaseMovie) {
         if (movieData != null && movieData.has("Title")) {
             String title = movieData.get("Title").getAsString();
             String posterUrl = "N/A";
             if (movieData.has("Poster")) {
                 posterUrl = movieData.get("Poster").getAsString();
             }
+
+            // --- HYBRID RATING LOGIC ---
             int rating = 0;
-            if (movieData.has("imdbRating") && !movieData.get("imdbRating").getAsString().equals("N/A")) {
-                try {
-                    double imdbScore = movieData.get("imdbRating").getAsDouble();
-                    rating = (int) Math.round(imdbScore / 2.0);
-                } catch (NumberFormatException e) {
+
+            if (firebaseMovie != null && firebaseMovie.getRatingCount() > 0) {
+                // Priority: Use Community Rating
+                double avg = firebaseMovie.getRatingTotal() / (double) firebaseMovie.getRatingCount();
+                rating = (int) Math.round(avg);
+            } else {
+                // Fallback: Use OMDB Rating
+                if (movieData.has("imdbRating") && !movieData.get("imdbRating").getAsString().equals("N/A")) {
+                    try {
+                        double imdbScore = movieData.get("imdbRating").getAsDouble();
+                        rating = (int) Math.round(imdbScore / 2.0);
+                    } catch (NumberFormatException e) {}
                 }
             }
 
