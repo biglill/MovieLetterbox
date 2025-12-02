@@ -1,7 +1,9 @@
 package movieLetterbox.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class User {
-    // --- MODIFIED: Changed from int to String ---
     private String userId;
     private String email;
     private String password;
@@ -16,9 +18,12 @@ public class User {
     private String age;
     private String phone;
 
+    private List<String> favorites = new ArrayList<>();
+    // NEW: List to store IDs of people this user follows
+    private List<String> following = new ArrayList<>();
+
     public User() {}
 
-    // --- MODIFIED: Getter and Setter now use String ---
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
 
@@ -55,17 +60,26 @@ public class User {
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
 
+    public List<String> getFavorites() {
+        if (favorites == null) favorites = new ArrayList<>();
+        return favorites;
+    }
+    public void setFavorites(List<String> favorites) { this.favorites = favorites; }
+
+    // NEW: Getter and Setter for Following
+    public List<String> getFollowing() {
+        if (following == null) following = new ArrayList<>();
+        return following;
+    }
+    public void setFollowing(List<String> following) { this.following = following; }
+
     @Override
     public String toString() {
         return "User{" +
-                // --- MODIFIED: Now references a String ---
                 "userId='" + userId + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
                 ", username='" + username + '\'' +
-                ", name='" + name + '\'' +
-                ", age='" + age + '\'' +
-                ", phone='" + phone + '\'' +
+                ", favorites=" + favorites +
+                ", following=" + following +
                 '}';
     }
 }

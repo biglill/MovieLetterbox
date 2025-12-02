@@ -1,19 +1,34 @@
 package movieLetterbox.controller;
 
+import com.google.gson.JsonObject;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
+import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import movieLetterbox.MainApplication;
+import movieLetterbox.model.Movie;
+import movieLetterbox.model.Review;
 import movieLetterbox.model.User;
+import movieLetterbox.service.FirebaseService;
+import movieLetterbox.service.OmdbService;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class MovieDetailsController {
 
@@ -22,11 +37,230 @@ public class MovieDetailsController {
     @FXML private HBox ratingStarContainer;
     @FXML private TextArea userReviewArea;
     @FXML private Label descriptionLabel;
+    @FXML private VBox reviewsContainer;
+
+    // NEW: Heart Icon
+    @FXML private SVGPath favoriteHeartIcon;
 
     private User currentUser;
+    private Movie currentMovie;
+    private int currentRating = 0;
+
+    // To track if we are updating an existing review or creating a new one
+    private Review existingUserReview = null;
+
+    private final OmdbService omdbService = new OmdbService();
+    private final FirebaseService firebaseService = MainApplication.firebaseService;
 
     public void setUserData(User user) {
         this.currentUser = user;
+    }
+
+    public void setMovieData(String movieId) {
+        movieTitleLabel.setText("Loading...");
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                JsonObject json = omdbService.GetMovieByID(movieId);
+                this.currentMovie = new Movie(json);
+
+                Platform.runLater(() -> {
+                    updateUI(currentMovie);
+                    loadReviews(movieId);
+
+                    if (currentUser != null) {
+                        // 1. Check if reviewed previously to preload data
+                        checkUserReviewStatus(movieId);
+                        // 2. Check if favorite to color the heart
+                        updateFavoriteIcon();
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> movieTitleLabel.setText("Error loading movie."));
+            }
+        });
+    }
+
+    // NEW: Handle Heart Click
+    @FXML
+    void handleToggleFavorite(MouseEvent event) {
+        if (currentUser == null || currentMovie == null) return;
+
+        boolean isFav = isMovieFavorite();
+
+        if (isFav) {
+            // Remove
+            firebaseService.removeFavorite(currentUser, currentMovie.getMovieId());
+        } else {
+            // Add
+            firebaseService.addFavorite(currentUser, currentMovie.getMovieId());
+        }
+
+        // Update UI immediately (state is already updated in user object by service)
+        updateFavoriteIcon();
+    }
+
+    private boolean isMovieFavorite() {
+        if (currentUser.getFavorites() == null) return false;
+        return currentUser.getFavorites().contains(currentMovie.getMovieId());
+    }
+
+    private void updateFavoriteIcon() {
+        if (favoriteHeartIcon == null) return;
+
+        favoriteHeartIcon.getStyleClass().removeAll("heart-empty", "heart-filled");
+
+        if (isMovieFavorite()) {
+            favoriteHeartIcon.getStyleClass().add("heart-filled");
+        } else {
+            favoriteHeartIcon.getStyleClass().add("heart-empty");
+        }
+    }
+
+    /**
+     * Fetches the specific review for the current user to preload UI
+     */
+    private void checkUserReviewStatus(String movieId) {
+        CompletableFuture.runAsync(() -> {
+            Review review = firebaseService.getUserReview(movieId, currentUser.getUserId());
+
+            if (review != null) {
+                existingUserReview = review;
+                Platform.runLater(() -> {
+                    // Preload the star rating
+                    currentRating = review.getRating();
+                    updateStarVisuals(currentRating);
+
+                    // Preload the text review
+                    userReviewArea.setText(review.getReviewText());
+
+                    System.out.println("Loaded existing review for user.");
+                });
+            }
+        });
+    }
+
+    private void updateUI(Movie movie) {
+        movieTitleLabel.setText(movie.getName() + " (" + movie.getYear() + ")");
+        descriptionLabel.setText(movie.getPlot());
+
+        if (movie.getPosterPic() != null && !movie.getPosterPic().equals("N/A")) {
+            posterImageView.setImage(new Image(movie.getPosterPic()));
+        }
+    }
+
+    private void loadReviews(String movieId) {
+        CompletableFuture.runAsync(() -> {
+            List<Review> reviews = firebaseService.getReviews(movieId);
+            Platform.runLater(() -> populateReviews(reviews));
+        });
+    }
+
+    private void populateReviews(List<Review> reviews) {
+        reviewsContainer.getChildren().clear();
+
+        for (Review r : reviews) {
+            VBox reviewBox = new VBox();
+            reviewBox.getStyleClass().add("content-box");
+            reviewBox.setPadding(new Insets(10));
+            reviewBox.setSpacing(5);
+
+            Label reviewText = new Label("\"" + r.getReviewText() + "\"");
+            reviewText.setWrapText(true);
+            reviewText.getStyleClass().add("review-text");
+
+            String stars = "★".repeat(r.getRating());
+            Label ratingLabel = new Label(stars);
+            ratingLabel.setStyle("-fx-text-fill: #F6E05E; -fx-font-size: 14px;");
+
+            Label authorLabel = new Label("- " + r.getUsername());
+            authorLabel.getStyleClass().add("review-author");
+            authorLabel.setMaxWidth(Double.MAX_VALUE);
+            authorLabel.setAlignment(javafx.geometry.Pos.BOTTOM_RIGHT);
+
+            reviewBox.getChildren().addAll(ratingLabel, reviewText, authorLabel);
+            reviewsContainer.getChildren().add(reviewBox);
+        }
+    }
+
+    @FXML
+    void handleSetRating(MouseEvent event) {
+        Node source = (Node) event.getSource();
+        int index = ratingStarContainer.getChildren().indexOf(source);
+
+        if (index != -1) {
+            currentRating = index + 1; // 0-indexed to 1-5 rating
+            updateStarVisuals(currentRating);
+        }
+    }
+
+    private void updateStarVisuals(int rating) {
+        for (int i = 0; i < ratingStarContainer.getChildren().size(); i++) {
+            SVGPath star = (SVGPath) ratingStarContainer.getChildren().get(i);
+            if (i < rating) {
+                star.getStyleClass().remove("star-empty");
+                if (!star.getStyleClass().contains("star-filled")) {
+                    star.getStyleClass().add("star-filled");
+                }
+            } else {
+                star.getStyleClass().remove("star-filled");
+                if (!star.getStyleClass().contains("star-empty")) {
+                    star.getStyleClass().add("star-empty");
+                }
+            }
+        }
+    }
+
+    @FXML
+    void handleSubmitReviewAction(ActionEvent event) {
+        if (currentUser == null) {
+            showAlert("Error", "You must be logged in to review.");
+            return;
+        }
+        if (currentMovie == null) {
+            showAlert("Error", "Movie data not loaded.");
+            return;
+        }
+        if (currentRating == 0) {
+            showAlert("Missing Rating", "Please click a star to rate the movie.");
+            return;
+        }
+
+        String text = userReviewArea.getText();
+        if (text.isBlank()) {
+            showAlert("Missing Review", "Please write a review.");
+            return;
+        }
+
+        if (existingUserReview != null) {
+            showAlert("Update Info", "We are saving this as a new entry. (Update logic pending)");
+        }
+
+        Review newReview = new Review(
+                currentUser.getUserId(),
+                currentUser.getUsername(),
+                currentMovie.getMovieId(),
+                currentRating,
+                text
+        );
+
+        CompletableFuture.runAsync(() -> {
+            firebaseService.addReview(currentMovie, newReview);
+            Platform.runLater(() -> {
+                loadReviews(currentMovie.getMovieId());
+                showAlert("Success", "Review submitted!");
+            });
+        });
+    }
+
+    private void showAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     @FXML
@@ -39,7 +273,6 @@ public class MovieDetailsController {
                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
             }
 
-            // Get the MainMenuController and pass the user back so they stay logged in
             MainMenuController controller = fxmlLoader.getController();
             if (currentUser != null) {
                 controller.setUserData(currentUser);
@@ -54,25 +287,5 @@ public class MovieDetailsController {
             e.printStackTrace();
             System.err.println("Failed to return to main menu.");
         }
-    }
-
-    @FXML
-    void handleSetRating(MouseEvent event) {
-        System.out.println("A star was clicked");
-        // Logic to determine which star was clicked and update UI/backend
-    }
-
-    @FXML
-    void handleSubmitReviewAction(ActionEvent event) {
-        String reviewText = userReviewArea.getText();
-        System.out.println("Submitting review: " + reviewText);
-        // Logic to send review to backend
-    }
-
-    // Method intended for the MainMenuController to call to pass movie data
-    public void setMovieData(String movieId) {
-        // Backend team will implement fetching data here
-        System.out.println("Loading details for movie ID: " + movieId);
-        movieTitleLabel.setText("Loading details for ID: " + movieId);
     }
 }

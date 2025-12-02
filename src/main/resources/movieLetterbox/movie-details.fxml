@@ -11,21 +11,15 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.SVGPath?>
 
-<!--
-    Updated:
-    1. Added fitToHeight="true" so the background fills the screen.
-    2. Changed styleClass to "scroll-pane-transparent" (from Style.css) to remove the default grey root background.
--->
 <ScrollPane fitToWidth="true" fitToHeight="true" styleClass="scroll-pane-transparent" stylesheets="@Style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="movieLetterbox.controller.MovieDetailsController">
     <content>
-        <!-- Updated: Applied the specific background color here -->
         <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="root">
             <padding>
                 <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
             </padding>
 
             <AnchorPane maxWidth="900.0">
-                <Label fx:id="movieTitleLabel" alignment="CENTER" text="Movie Title Placeholder" AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" styleClass="movie-details-title" wrapText="true" />
+                <Label fx:id="movieTitleLabel" alignment="CENTER" text="Loading..." AnchorPane.leftAnchor="100.0" AnchorPane.rightAnchor="100.0" styleClass="movie-details-title" wrapText="true" />
                 <Button onAction="#handleReturnAction" text="Return" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" styleClass="button-return"/>
             </AnchorPane>
 
@@ -33,6 +27,12 @@
 
                 <VBox alignment="TOP_CENTER" spacing="20.0" styleClass="left-column">
                     <ImageView fx:id="posterImageView" fitHeight="400.0" fitWidth="270.0" pickOnBounds="true" preserveRatio="true" styleClass="details-poster" />
+
+                    <!-- NEW: Favorite Button Section -->
+                    <HBox alignment="CENTER" spacing="10" styleClass="heart-container" onMouseClicked="#handleToggleFavorite">
+                        <SVGPath fx:id="favoriteHeartIcon" content="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" styleClass="heart-icon, heart-empty"/>
+                        <Label text="Add to Favorites" style="-fx-font-weight: bold; -fx-text-fill: #E53E3E;"/>
+                    </HBox>
 
                     <VBox alignment="CENTER" spacing="10.0">
                         <Label text="Rate" styleClass="section-header-small" />
@@ -58,28 +58,14 @@
                     <VBox spacing="10.0" alignment="TOP_CENTER">
                         <Label text="Description" styleClass="section-header" />
                         <VBox styleClass="content-box">
-                            <Label fx:id="descriptionLabel" text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat." wrapText="true" />
+                            <Label fx:id="descriptionLabel" text="Loading description..." wrapText="true" />
                         </VBox>
                     </VBox>
 
                     <VBox spacing="15.0" alignment="TOP_CENTER">
                         <Label text="Reviews" styleClass="section-header" />
-                        <VBox styleClass="content-box">
-                            <Label text="&quot;A thrilling experience from start to finish. The visuals were stunning.&quot;" wrapText="true" styleClass="review-text"/>
-                            <Label text="- User123" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox styleClass="content-box">
-                            <Label text="&quot;I didn't expect the plot twist at the end. Definitely worth watching.&quot;" wrapText="true" styleClass="review-text"/>
-                            <Label text="- MovieBuff99" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox styleClass="content-box">
-                            <Label text="&quot;The pacing was a bit slow in the middle, but the climax made up for it.&quot;" wrapText="true" styleClass="review-text"/>
-                            <Label text="- Critic_01" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
-                        </VBox>
-                        <VBox styleClass="content-box">
-                            <Label text="&quot;An absolute masterpiece. Highly recommend.&quot;" wrapText="true" styleClass="review-text"/>
-                            <Label text="- CinemaLover" styleClass="review-author" alignment="BOTTOM_RIGHT" maxWidth="Infinity"/>
-                        </VBox>
+                        <!-- ADDED fx:id HERE so the Controller can access it -->
+                        <VBox fx:id="reviewsContainer" spacing="10" />
                     </VBox>
                 </VBox>
             </HBox>

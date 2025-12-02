@@ -349,3 +349,29 @@
     -fx-text-fill: #555555;
     -fx-font-style: italic;
 }
+
+/* Heart Button Styling */
+.heart-icon {
+    -fx-scale-x: 2.0;
+    -fx-scale-y: 2.0;
+    -fx-cursor: hand;
+    -fx-stroke: #E53E3E; /* Red Border */
+    -fx-stroke-width: 2;
+}
+
+.heart-empty {
+    -fx-fill: transparent;
+}
+
+.heart-filled {
+    -fx-fill: #E53E3E; /* Red Fill */
+}
+
+.heart-container {
+    -fx-alignment: CENTER;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+.heart-container:hover {
+    -fx-effect: dropshadow(gaussian, rgba(229, 62, 62, 0.4), 10, 0, 0, 0);
+}

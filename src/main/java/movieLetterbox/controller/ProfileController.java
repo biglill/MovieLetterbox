@@ -1,5 +1,7 @@
 package movieLetterbox.controller;
 
+import com.google.gson.JsonObject;
+import javafx.application.Platform;
 import javafx.embed.swing.SwingFXUtils;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +16,7 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -21,12 +24,15 @@ import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import movieLetterbox.MainApplication;
+import movieLetterbox.model.Movie;
 import movieLetterbox.model.User;
 import movieLetterbox.service.FirebaseService;
+import movieLetterbox.service.OmdbService;
 
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
 
 public class ProfileController {
 
@@ -35,6 +41,7 @@ public class ProfileController {
     @FXML private ImageView viewProfileImage;
     @FXML private Label viewUsernameLabel;
     @FXML private Label viewBioLabel;
+    @FXML private HBox favoritesContainer; // NEW: Holds the dynamic favorite cards
 
     // --- VIEW 2: EDIT PAGE FIELDS ---
     @FXML private VBox editProfilePane;
@@ -44,7 +51,6 @@ public class ProfileController {
 
     @FXML private TextField usernameField;
     @FXML private TextArea bioArea;
-    // Note: Removed passwordField from main edit pane logic
     @FXML private Label statusLabel;
 
     // --- VIEW 3: CHANGE PASSWORD FIELDS ---
@@ -56,6 +62,7 @@ public class ProfileController {
 
     private User currentUser;
     private FirebaseService firebaseService;
+    private final OmdbService omdbService = new OmdbService(); // NEW: Needed to fetch posters
     private File selectedPhotoFile;
 
     private double startX, startY;
@@ -122,15 +129,100 @@ public class ProfileController {
                 resetImageAdjustment();
             } else {
                 try {
-                    Image placeholder = new Image(MainApplication.class.getResource("placeholder.png").toExternalForm());
-                    viewProfileImage.setImage(placeholder);
-                    profileImageView.setImage(placeholder);
+                    // Try loading placeholder if available, otherwise just leave blank
+                    if (MainApplication.class.getResource("placeholder.png") != null) {
+                        Image placeholder = new Image(MainApplication.class.getResource("placeholder.png").toExternalForm());
+                        viewProfileImage.setImage(placeholder);
+                        profileImageView.setImage(placeholder);
+                    }
                     resetImageAdjustment();
                 } catch (Exception e) {
                     // Ignore
                 }
             }
+
+            // NEW: Load Favorites
+            loadFavorites();
         }
+    }
+
+    private void loadFavorites() {
+        favoritesContainer.getChildren().clear();
+
+        if (currentUser.getFavorites() == null || currentUser.getFavorites().isEmpty()) {
+            Label placeholder = new Label("No favorite movies yet.");
+            placeholder.setStyle("-fx-text-fill: #888888; -fx-font-style: italic;");
+            favoritesContainer.getChildren().add(placeholder);
+            return;
+        }
+
+        // Loop through favorite IDs and fetch data
+        for (String movieId : currentUser.getFavorites()) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    JsonObject json = omdbService.GetMovieByID(movieId);
+                    Movie movie = new Movie(json);
+
+                    Platform.runLater(() -> {
+                        favoritesContainer.getChildren().add(createFavoriteCard(movie));
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
+    private VBox createFavoriteCard(Movie movie) {
+        VBox card = new VBox();
+        card.getStyleClass().add("movie-card"); // Reuse existing style
+        card.setPrefWidth(200);
+        card.setPrefHeight(300);
+        card.setAlignment(javafx.geometry.Pos.CENTER);
+
+        ImageView poster = new ImageView();
+        poster.setFitWidth(180);
+        poster.setFitHeight(270);
+        poster.setPreserveRatio(true);
+        poster.getStyleClass().add("movie-poster");
+
+        if (movie.getPosterPic() != null && !movie.getPosterPic().equals("N/A")) {
+            poster.setImage(new Image(movie.getPosterPic(), true));
+        } else {
+            // Optional: Set placeholder image
+            // poster.setImage(new Image(...));
+        }
+
+        // Add label if poster fails or for style
+        Label titleLabel = new Label(movie.getName());
+        titleLabel.setStyle("-fx-text-fill: #333; -fx-font-weight: bold; -fx-wrap-text: true; -fx-text-alignment: center;");
+        titleLabel.setVisible(false); // Hide title if poster loads usually, or keep it visible based on preference.
+
+        card.getChildren().addAll(poster);
+
+        // Add Click Listener to open Movie Details
+        card.setOnMouseClicked(e -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("movie-details.fxml"));
+                Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+
+                if (MainApplication.class.getResource("Style.css") != null) {
+                    scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                }
+
+                MovieDetailsController controller = fxmlLoader.getController();
+                controller.setMovieData(movie.getMovieId());
+                controller.setUserData(currentUser);
+
+                Stage stage = (Stage) favoritesContainer.getScene().getWindow();
+                stage.setScene(scene);
+                stage.setTitle(movie.getName() + " - Details");
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        return card;
     }
 
     private void resetImageAdjustment() {
@@ -292,7 +384,6 @@ public class ProfileController {
     @FXML
     void handleChangePasswordAction(ActionEvent event) {
         editProfilePane.setVisible(false); // Hide edit pane or keep it in background
-        // Since we use StackPane, just making password pane visible on top is enough if background is opaque
         changePasswordPane.setVisible(true);
         passwordStatusLabel.setText("");
         currentPasswordField.clear();
