@@ -7,7 +7,9 @@ import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -20,9 +22,11 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.Stage;
 import movieLetterbox.MainApplication;
 import movieLetterbox.model.User;
+import movieLetterbox.service.FirebaseService;
 import movieLetterbox.service.OmdbService;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class MainMenuController {
@@ -30,12 +34,14 @@ public class MainMenuController {
     @FXML private Label welcomeLabel;
     @FXML private TextField searchField;
     @FXML private TilePane movieGrid;
+    @FXML private ComboBox<String> searchTypeCombo; // NEW: To switch modes
 
     @FXML private ImageView userProfileImage;
     @FXML private SVGPath defaultProfileIcon;
 
     private User user;
     private final OmdbService omdbService = new OmdbService();
+    private final FirebaseService firebaseService = MainApplication.firebaseService;
 
     private final String[] RECENT_MOVIES = {
             "Dune: Part Two", "Civil War", "The Fall Guy", "Challengers",
@@ -72,7 +78,30 @@ public class MainMenuController {
     @FXML
     public void initialize() {
         if (searchField != null) {
-            searchField.setOnAction(event -> searchMovies(searchField.getText()));
+            searchField.setOnAction(event -> handleSearch());
+        }
+
+        // NEW: Fix for ComboBox text visibility
+        // Explicitly set the "Button Cell" (the part visible when closed) to show the text
+        if (searchTypeCombo != null) {
+            searchTypeCombo.setButtonCell(new ListCell<String>() {
+                @Override
+                protected void updateItem(String item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || item == null) {
+                        setText(null);
+                    } else {
+                        setText(item);
+                        // Force styles: Purple text, Bold, and some padding
+                        setStyle("-fx-text-fill: #4C51BF; -fx-font-weight: bold; -fx-padding: 0 0 0 5;");
+                    }
+                }
+            });
+
+            // Ensure "Movies" is selected by default if nothing is set
+            if (searchTypeCombo.getValue() == null) {
+                searchTypeCombo.getSelectionModel().select("Movies");
+            }
         }
     }
 
@@ -84,6 +113,96 @@ public class MainMenuController {
         loadDashboardMovies();
     }
 
+    // Unified Search Handler
+    private void handleSearch() {
+        String query = searchField.getText();
+        if (query == null || query.isBlank()) return;
+
+        String type = searchTypeCombo.getValue();
+
+        if ("People".equals(type)) {
+            searchUsers(query);
+        } else {
+            searchMovies(query);
+        }
+    }
+
+    // --- USER SEARCH LOGIC ---
+    private void searchUsers(String query) {
+        movieGrid.getChildren().clear();
+        CompletableFuture.runAsync(() -> {
+            try {
+                List<User> users = firebaseService.searchUsers(query);
+                Platform.runLater(() -> {
+                    if (users.isEmpty()) {
+                        Label noRes = new Label("No users found.");
+                        noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+                        movieGrid.getChildren().add(noRes);
+                    } else {
+                        for (User u : users) {
+                            movieGrid.getChildren().add(createUserCard(u));
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private VBox createUserCard(User targetUser) {
+        VBox card = new VBox();
+        card.getStyleClass().add("movie-card"); // Reuse card style
+        card.setAlignment(javafx.geometry.Pos.CENTER);
+
+        // Circular Profile Image
+        ImageView profileImg = new ImageView();
+        profileImg.setFitWidth(150);
+        profileImg.setFitHeight(150);
+        profileImg.setPreserveRatio(true);
+
+        if (targetUser.getProfilePhotoUrl() != null && !targetUser.getProfilePhotoUrl().isBlank()) {
+            profileImg.setImage(new Image(targetUser.getProfilePhotoUrl(), true));
+            Circle clip = new Circle(75, 75, 75);
+            profileImg.setClip(clip);
+        } else {
+            try {
+                if (MainApplication.class.getResource("placeholder.png") != null) {
+                    profileImg.setImage(new Image(MainApplication.class.getResource("placeholder.png").toExternalForm()));
+                }
+            } catch (Exception e) {}
+        }
+
+        Label nameLabel = new Label(targetUser.getUsername());
+        nameLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 16px; -fx-padding: 10 0 0 0;");
+
+        card.getChildren().addAll(profileImg, nameLabel);
+
+        // Click to Open Profile
+        card.setOnMouseClicked(e -> {
+            try {
+                FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
+                Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
+                if (MainApplication.class.getResource("Style.css") != null) {
+                    scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
+                }
+
+                ProfileController controller = fxmlLoader.getController();
+                // We are 'user', looking at 'targetUser'
+                controller.setProfileData(this.user, targetUser);
+
+                Stage stage = (Stage) welcomeLabel.getScene().getWindow();
+                stage.setScene(scene);
+                stage.setTitle("Profile - " + targetUser.getUsername());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        return card;
+    }
+
+    // --- MOVIE SEARCH LOGIC (Existing) ---
     private void loadDashboardMovies() {
         movieGrid.getChildren().clear();
         for (String title : RECENT_MOVIES) {
@@ -92,7 +211,6 @@ public class MainMenuController {
     }
 
     private void searchMovies(String query) {
-        if (query == null || query.isBlank()) return;
         movieGrid.getChildren().clear();
         CompletableFuture.runAsync(() -> {
             try {
@@ -111,7 +229,11 @@ public class MainMenuController {
                         }
                     }
                 } else {
-                    System.out.println("No movies found for query: " + query);
+                    Platform.runLater(() -> {
+                        Label noRes = new Label("No movies found.");
+                        noRes.setStyle("-fx-font-size: 18px; -fx-text-fill: #555;");
+                        movieGrid.getChildren().add(noRes);
+                    });
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -164,7 +286,6 @@ public class MainMenuController {
             try {
                 image = new Image(MainApplication.class.getResource("poster_not_found.png").toExternalForm());
             } catch (Exception e) {
-                System.err.println("Could not find poster_not_found.png in resources.");
                 image = null;
             }
         } else {
@@ -209,7 +330,6 @@ public class MainMenuController {
 
                 MovieDetailsController controller = fxmlLoader.getController();
                 controller.setMovieData(movieId);
-                // --- FIX: Pass the current user to the details controller ---
                 controller.setUserData(this.user);
 
                 Stage stage = (Stage) welcomeLabel.getScene().getWindow();
@@ -218,7 +338,6 @@ public class MainMenuController {
                 stage.show();
             } catch (IOException ex) {
                 ex.printStackTrace();
-                System.err.println("Failed to load movie details screen.");
             }
         });
 

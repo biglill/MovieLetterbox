@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
@@ -10,6 +11,8 @@
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.TilePane?>
 <?import javafx.scene.shape.SVGPath?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="movieLetterbox.controller.MainMenuController"
@@ -27,10 +30,26 @@
 
             <Region HBox.hgrow="ALWAYS"/>
 
-            <HBox alignment="CENTER" styleClass="search-container" maxHeight="40">
-                <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
-                         scaleX="0.7" scaleY="0.7" styleClass="search-icon"/>
-                <TextField fx:id="searchField" promptText="Search...." styleClass="search-input"/>
+            <!-- NEW: Search Type Selector & Search Bar -->
+            <HBox spacing="10" alignment="CENTER">
+                <!-- INCREASED WIDTH FROM 100 TO 130 -->
+                <ComboBox fx:id="searchTypeCombo" prefWidth="130" styleClass="button-secondary">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="Movies" />
+                            <String fx:value="People" />
+                        </FXCollections>
+                    </items>
+                    <value>
+                        <String fx:value="Movies" />
+                    </value>
+                </ComboBox>
+
+                <HBox alignment="CENTER" styleClass="search-container" maxHeight="40">
+                    <SVGPath content="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                             scaleX="0.7" scaleY="0.7" styleClass="search-icon"/>
+                    <TextField fx:id="searchField" promptText="Search..." styleClass="search-input"/>
+                </HBox>
             </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>

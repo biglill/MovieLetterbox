@@ -8,6 +8,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.SnapshotParameters;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.ScrollPane;
@@ -41,7 +42,9 @@ public class ProfileController {
     @FXML private ImageView viewProfileImage;
     @FXML private Label viewUsernameLabel;
     @FXML private Label viewBioLabel;
-    @FXML private HBox favoritesContainer; // NEW: Holds the dynamic favorite cards
+    @FXML private HBox favoritesContainer;
+    @FXML private Button editProfileButton;
+    @FXML private Button followButton; // NEW
 
     // --- VIEW 2: EDIT PAGE FIELDS ---
     @FXML private VBox editProfilePane;
@@ -60,9 +63,13 @@ public class ProfileController {
     @FXML private PasswordField confirmNewPasswordField;
     @FXML private Label passwordStatusLabel;
 
+    // currentUser = The logged-in user
     private User currentUser;
+    // profileUser = The user whose profile we are looking at
+    private User profileUser;
+
     private FirebaseService firebaseService;
-    private final OmdbService omdbService = new OmdbService(); // NEW: Needed to fetch posters
+    private final OmdbService omdbService = new OmdbService();
     private File selectedPhotoFile;
 
     private double startX, startY;
@@ -71,28 +78,22 @@ public class ProfileController {
     @FXML
     public void initialize() {
         firebaseService = MainApplication.firebaseService;
-
-        // Initialize visibility states
         profileViewPane.setVisible(true);
         editProfilePane.setVisible(false);
-        if (changePasswordPane != null) {
-            changePasswordPane.setVisible(false);
-        }
+        if (changePasswordPane != null) changePasswordPane.setVisible(false);
 
-        // --- SETUP CIRCULAR CROP & INTERACTION ---
+        // Setup image crop interactions
         if (imageCropContainer != null) {
             Circle clip = new Circle(50);
             clip.setCenterX(50);
             clip.setCenterY(50);
             imageCropContainer.setClip(clip);
-
             imageCropContainer.setOnMousePressed(e -> {
                 startX = e.getSceneX();
                 startY = e.getSceneY();
                 initialTranslateX = profileImageView.getTranslateX();
                 initialTranslateY = profileImageView.getTranslateY();
             });
-
             imageCropContainer.setOnMouseDragged(e -> {
                 double deltaX = e.getSceneX() - startX;
                 double deltaY = e.getSceneY() - startY;
@@ -100,7 +101,6 @@ public class ProfileController {
                 profileImageView.setTranslateY(initialTranslateY + deltaY);
             });
         }
-
         if (zoomSlider != null) {
             zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
                 profileImageView.setScaleX(newVal.doubleValue());
@@ -109,63 +109,113 @@ public class ProfileController {
         }
     }
 
+    /**
+     * Sets the logged-in user.
+     * By default, this assumes the user is viewing their OWN profile.
+     */
     public void setUserData(User user) {
         this.currentUser = user;
+        this.profileUser = user; // Default to self-view
+        updateUI();
+    }
+
+    /**
+     * Call this when viewing ANOTHER user's profile.
+     */
+    public void setProfileData(User currentUser, User targetUser) {
+        this.currentUser = currentUser;
+        this.profileUser = targetUser;
         updateUI();
     }
 
     private void updateUI() {
-        if (currentUser != null) {
-            viewUsernameLabel.setText(currentUser.getUsername());
-            viewBioLabel.setText("Bio: " + (currentUser.getBio() != null ? currentUser.getBio() : ""));
+        if (profileUser == null) return;
 
+        // 1. Load Profile Details
+        viewUsernameLabel.setText(profileUser.getUsername());
+        viewBioLabel.setText("Bio: " + (profileUser.getBio() != null ? profileUser.getBio() : ""));
+
+        // Load image
+        if (profileUser.getProfilePhotoUrl() != null && !profileUser.getProfilePhotoUrl().isBlank()) {
+            Image image = new Image(profileUser.getProfilePhotoUrl(), true);
+            viewProfileImage.setImage(image);
+            profileImageView.setImage(image);
+        } else {
+            try {
+                if (MainApplication.class.getResource("placeholder.png") != null) {
+                    Image placeholder = new Image(MainApplication.class.getResource("placeholder.png").toExternalForm());
+                    viewProfileImage.setImage(placeholder);
+                    profileImageView.setImage(placeholder);
+                }
+            } catch (Exception e) {}
+        }
+        resetImageAdjustment();
+
+        // 2. Handle "My Profile" vs "Friend's Profile"
+        if (currentUser.getUserId().equals(profileUser.getUserId())) {
+            // Viewing Self
+            editProfileButton.setVisible(true);
+            editProfileButton.setManaged(true);
+            followButton.setVisible(false);
+            followButton.setManaged(false);
+
+            // Populate edit fields
             usernameField.setText(currentUser.getUsername());
             bioArea.setText(currentUser.getBio() != null ? currentUser.getBio() : "");
+        } else {
+            // Viewing Someone Else
+            editProfileButton.setVisible(false);
+            editProfileButton.setManaged(false);
+            followButton.setVisible(true);
+            followButton.setManaged(true);
 
-            if (currentUser.getProfilePhotoUrl() != null && !currentUser.getProfilePhotoUrl().isBlank()) {
-                Image image = new Image(currentUser.getProfilePhotoUrl(), true);
-                viewProfileImage.setImage(image);
-                profileImageView.setImage(image);
-                resetImageAdjustment();
-            } else {
-                try {
-                    // Try loading placeholder if available, otherwise just leave blank
-                    if (MainApplication.class.getResource("placeholder.png") != null) {
-                        Image placeholder = new Image(MainApplication.class.getResource("placeholder.png").toExternalForm());
-                        viewProfileImage.setImage(placeholder);
-                        profileImageView.setImage(placeholder);
-                    }
-                    resetImageAdjustment();
-                } catch (Exception e) {
-                    // Ignore
-                }
-            }
-
-            // NEW: Load Favorites
-            loadFavorites();
+            updateFollowButtonState();
         }
+
+        // 3. Load Favorites (of the profileUser, not currentUser)
+        loadFavorites();
+    }
+
+    private void updateFollowButtonState() {
+        boolean isFollowing = currentUser.getFollowing() != null && currentUser.getFollowing().contains(profileUser.getUserId());
+        if (isFollowing) {
+            followButton.setText("Unfollow");
+            followButton.setStyle("-fx-background-color: #E53E3E;"); // Red for unfollow
+        } else {
+            followButton.setText("Follow");
+            followButton.setStyle("-fx-background-color: #4C51BF;"); // Standard purple
+        }
+    }
+
+    @FXML
+    void handleFollowAction(ActionEvent event) {
+        boolean isFollowing = currentUser.getFollowing() != null && currentUser.getFollowing().contains(profileUser.getUserId());
+
+        if (isFollowing) {
+            firebaseService.unfollowUser(currentUser, profileUser.getUserId());
+        } else {
+            firebaseService.followUser(currentUser, profileUser.getUserId());
+        }
+        // Update UI immediately
+        updateFollowButtonState();
     }
 
     private void loadFavorites() {
         favoritesContainer.getChildren().clear();
 
-        if (currentUser.getFavorites() == null || currentUser.getFavorites().isEmpty()) {
+        if (profileUser.getFavorites() == null || profileUser.getFavorites().isEmpty()) {
             Label placeholder = new Label("No favorite movies yet.");
             placeholder.setStyle("-fx-text-fill: #888888; -fx-font-style: italic;");
             favoritesContainer.getChildren().add(placeholder);
             return;
         }
 
-        // Loop through favorite IDs and fetch data
-        for (String movieId : currentUser.getFavorites()) {
+        for (String movieId : profileUser.getFavorites()) {
             CompletableFuture.runAsync(() -> {
                 try {
                     JsonObject json = omdbService.GetMovieByID(movieId);
                     Movie movie = new Movie(json);
-
-                    Platform.runLater(() -> {
-                        favoritesContainer.getChildren().add(createFavoriteCard(movie));
-                    });
+                    Platform.runLater(() -> favoritesContainer.getChildren().add(createFavoriteCard(movie)));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -175,7 +225,7 @@ public class ProfileController {
 
     private VBox createFavoriteCard(Movie movie) {
         VBox card = new VBox();
-        card.getStyleClass().add("movie-card"); // Reuse existing style
+        card.getStyleClass().add("movie-card");
         card.setPrefWidth(200);
         card.setPrefHeight(300);
         card.setAlignment(javafx.geometry.Pos.CENTER);
@@ -188,31 +238,20 @@ public class ProfileController {
 
         if (movie.getPosterPic() != null && !movie.getPosterPic().equals("N/A")) {
             poster.setImage(new Image(movie.getPosterPic(), true));
-        } else {
-            // Optional: Set placeholder image
-            // poster.setImage(new Image(...));
         }
-
-        // Add label if poster fails or for style
-        Label titleLabel = new Label(movie.getName());
-        titleLabel.setStyle("-fx-text-fill: #333; -fx-font-weight: bold; -fx-wrap-text: true; -fx-text-alignment: center;");
-        titleLabel.setVisible(false); // Hide title if poster loads usually, or keep it visible based on preference.
 
         card.getChildren().addAll(poster);
 
-        // Add Click Listener to open Movie Details
         card.setOnMouseClicked(e -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("movie-details.fxml"));
                 Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
-
                 if (MainApplication.class.getResource("Style.css") != null) {
                     scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
                 }
-
                 MovieDetailsController controller = fxmlLoader.getController();
                 controller.setMovieData(movie.getMovieId());
-                controller.setUserData(currentUser);
+                controller.setUserData(currentUser); // Keep logged-in user
 
                 Stage stage = (Stage) favoritesContainer.getScene().getWindow();
                 stage.setScene(scene);
@@ -221,7 +260,6 @@ public class ProfileController {
                 ex.printStackTrace();
             }
         });
-
         return card;
     }
 
@@ -239,21 +277,16 @@ public class ProfileController {
     }
 
     // --- NAVIGATION ACTIONS ---
-
     @FXML
     void handleBackAction(ActionEvent event) {
         try {
             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
-            // Use constants from MainApplication
             Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
-
             if (MainApplication.class.getResource("Style.css") != null) {
                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
             }
-
             MainMenuController controller = fxmlLoader.getController();
             controller.setUserData(currentUser);
-
             Stage stage = (Stage) profileViewPane.getScene().getWindow();
             stage.setScene(scene);
         } catch (IOException e) {
@@ -277,17 +310,12 @@ public class ProfileController {
     }
 
     // --- EDIT ACTIONS ---
-
     @FXML
     void handleChangePhotoAction(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Select New Profile Photo");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg")
-        );
-
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg"));
         File file = fileChooser.showOpenDialog(editProfilePane.getScene().getWindow());
-
         if (file != null) {
             selectedPhotoFile = file;
             try {
@@ -295,7 +323,6 @@ public class ProfileController {
                 profileImageView.setImage(image);
                 resetImageAdjustment();
                 zoomSlider.setDisable(false);
-
                 statusLabel.setText("Photo selected. Use drag & slider to adjust.");
                 statusLabel.setStyle("-fx-text-fill: blue;");
             } catch (Exception e) {
@@ -309,18 +336,14 @@ public class ProfileController {
     void handleSaveAction(ActionEvent event) {
         String newUsername = usernameField.getText();
         String newBio = bioArea.getText();
-
         if (newUsername.isBlank()) {
             statusLabel.setText("Username cannot be empty.");
             statusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-
         currentUser.setUsername(newUsername);
         currentUser.setBio(newBio);
-
         statusLabel.setText("Saving...");
-
         new Thread(() -> {
             try {
                 if (selectedPhotoFile != null && profileImageView.getImage() != null) {
@@ -329,10 +352,8 @@ public class ProfileController {
                             SnapshotParameters params = new SnapshotParameters();
                             params.setFill(Color.TRANSPARENT);
                             var croppedImage = imageCropContainer.snapshot(params, null);
-
                             File tempFile = File.createTempFile("profile_crop_update", ".png");
                             ImageIO.write(SwingFXUtils.fromFXImage(croppedImage, null), "png", tempFile);
-
                             new Thread(() -> {
                                 try {
                                     String newUrl = firebaseService.uploadProfilePhoto(tempFile, currentUser.getUserId());
@@ -344,7 +365,6 @@ public class ProfileController {
                                     showError("Error uploading photo.");
                                 }
                             }).start();
-
                         } catch (Exception e) {
                             e.printStackTrace();
                             showError("Error preparing photo.");
@@ -353,7 +373,6 @@ public class ProfileController {
                 } else {
                     finalizeSave();
                 }
-
             } catch (Exception e) {
                 e.printStackTrace();
                 showError("Error saving profile.");
@@ -363,7 +382,6 @@ public class ProfileController {
 
     private void finalizeSave() throws java.util.concurrent.ExecutionException, InterruptedException {
         firebaseService.updateUser(currentUser);
-
         javafx.application.Platform.runLater(() -> {
             updateUI();
             statusLabel.setText("Saved!");
@@ -379,11 +397,9 @@ public class ProfileController {
         });
     }
 
-    // --- CHANGE PASSWORD ACTIONS ---
-
     @FXML
     void handleChangePasswordAction(ActionEvent event) {
-        editProfilePane.setVisible(false); // Hide edit pane or keep it in background
+        editProfilePane.setVisible(false);
         changePasswordPane.setVisible(true);
         passwordStatusLabel.setText("");
         currentPasswordField.clear();
@@ -394,7 +410,7 @@ public class ProfileController {
     @FXML
     void handleCancelPasswordAction(ActionEvent event) {
         changePasswordPane.setVisible(false);
-        editProfilePane.setVisible(true); // Show edit pane again
+        editProfilePane.setVisible(true);
     }
 
     @FXML
@@ -402,37 +418,28 @@ public class ProfileController {
         String currentPass = currentPasswordField.getText();
         String newPass = newPasswordField.getText();
         String confirmPass = confirmNewPasswordField.getText();
-
         if (currentPass.isBlank() || newPass.isBlank() || confirmPass.isBlank()) {
             passwordStatusLabel.setText("All fields are required.");
             passwordStatusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-
-        // Check current password
         if (!currentPass.equals(currentUser.getPassword())) {
             passwordStatusLabel.setText("Incorrect current password.");
             passwordStatusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-
         if (!newPass.equals(confirmPass)) {
             passwordStatusLabel.setText("New passwords do not match.");
             passwordStatusLabel.setStyle("-fx-text-fill: red;");
             return;
         }
-
-        // Update logic
         currentUser.setPassword(newPass);
-
         new Thread(() -> {
             try {
                 firebaseService.updateUser(currentUser);
                 javafx.application.Platform.runLater(() -> {
                     passwordStatusLabel.setText("Password updated successfully!");
                     passwordStatusLabel.setStyle("-fx-text-fill: green;");
-
-                    // Delay closing for better UX
                     new Thread(() -> {
                         try {
                             Thread.sleep(1500);

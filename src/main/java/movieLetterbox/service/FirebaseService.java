@@ -136,6 +136,26 @@ public class FirebaseService {
         return null;
     }
 
+    /**
+     * Search for users where username starts with the query string.
+     */
+    public List<User> searchUsers(String usernameQuery) throws ExecutionException, InterruptedException {
+        // Simple prefix search using Firestore range queries
+        String end = usernameQuery + "\uf8ff";
+        Query query = db.collection("users")
+                .orderBy("username")
+                .startAt(usernameQuery)
+                .endAt(end);
+
+        ApiFuture<QuerySnapshot> future = query.get();
+        List<QueryDocumentSnapshot> documents = future.get().getDocuments();
+        List<User> users = new ArrayList<>();
+        for (DocumentSnapshot doc : documents) {
+            users.add(doc.toObject(User.class));
+        }
+        return users;
+    }
+
     // --- FRIEND / FOLLOW METHODS ---
 
     public void followUser(User currentUser, String targetUserId) {
