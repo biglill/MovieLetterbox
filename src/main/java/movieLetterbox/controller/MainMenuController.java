@@ -164,8 +164,8 @@ public class MainMenuController {
             profileImg.setClip(clip);
         } else {
             try {
-                if (MainApplication.class.getResource("placeholder.png") != null) {
-                    profileImg.setImage(new Image(MainApplication.class.getResource("placeholder.png").toExternalForm()));
+                if (MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png") != null) {
+                    profileImg.setImage(new Image(MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png").toExternalForm()));
                 }
             } catch (Exception e) {}
         }
@@ -325,7 +325,7 @@ public class MainMenuController {
 
         if (posterUrl == null || posterUrl.equals("N/A") || posterUrl.isEmpty()) {
             try {
-                poster.setImage(new Image(MainApplication.class.getResource("poster_not_found.png").toExternalForm()));
+                poster.setImage(new Image(MainApplication.class.getResource("/movieLetterbox/assets/movieDefault.png").toExternalForm()));
             } catch (Exception e) {}
         } else {
             poster.setImage(new Image(posterUrl, true));

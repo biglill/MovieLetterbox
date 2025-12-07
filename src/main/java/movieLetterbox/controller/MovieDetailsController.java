@@ -83,6 +83,13 @@ public class MovieDetailsController {
 
         if (movie.getPosterPic() != null && !movie.getPosterPic().equals("N/A")) {
             posterImageView.setImage(new Image(movie.getPosterPic()));
+        }else{
+            try {
+                if (MainApplication.class.getResource("/movieLetterbox/assets/movieDefault.png") != null) {
+                    Image placeholder = new Image(MainApplication.class.getResource("/movieLetterbox/assets/movieDefault.png").toExternalForm());
+                    posterImageView.setImage(placeholder);
+                }
+            } catch (Exception e) {}
         }
     }
 

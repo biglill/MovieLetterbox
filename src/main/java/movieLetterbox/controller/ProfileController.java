@@ -33,6 +33,7 @@ import movieLetterbox.service.TmdbService;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -134,8 +135,8 @@ public class ProfileController {
             profileImageView.setImage(image);
         } else {
             try {
-                if (MainApplication.class.getResource("placeholder.png") != null) {
-                    Image placeholder = new Image(MainApplication.class.getResource("placeholder.png").toExternalForm());
+                if (MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png") != null) {
+                    Image placeholder = new Image(MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png").toExternalForm());
                     viewProfileImage.setImage(placeholder);
                     profileImageView.setImage(placeholder);
                 }
@@ -272,8 +273,8 @@ public class ProfileController {
                 avatar.setClip(new Circle(20, 20, 20));
             } else {
                 try {
-                    if (MainApplication.class.getResource("placeholder.png") != null) {
-                        avatar.setImage(new Image(MainApplication.class.getResource("placeholder.png").toExternalForm()));
+                    if (MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png") != null) {
+                        avatar.setImage(new Image(MainApplication.class.getResource("/movieLetterbox/assets/pfpDefault.png").toExternalForm()));
                     }
                 } catch(Exception e){}
             }
