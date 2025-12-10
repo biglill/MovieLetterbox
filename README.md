@@ -1,28 +1,54 @@
-## Online Movie Discussion Platform
-The Online Movie Discussion Platform is a group project aimed at providing a way for movie watchers to discuss and rate movies online.
-Users will be able to create an account and sign in and customize their profile, such as, their profile picture, name, about me, etc.
-The profile will also show their recent comments and ratings on movies. 
-Users will be able to search for movies in a public open sourced movie database to create the initial forum.
-Once created users will be able to create ratings as well as posts discussing the selected movie.
-These actions will be reflected on their profile
-This Online Movie Discussion Platform aims to provide movie watches to interact and discuss their opinions. 
+# MovieLetterbox 🎬
 
-### World Assumptions:
-* User must have access to the internet and a suitable device.
-* User is motivated and interested in discussing and rating movies.
-* User must have basic understanding of forum style applications.
+**MovieLetterbox** is a desktop-based social platform for movie enthusiasts. Built with JavaFX and powered by the Firebase backend and The Movie Database (TMDB) API, it allows users to discover movies, leave reviews, rate films, and connect with a community of cinephiles.
 
-### User Requirements:
-* User friendly UI that is easy enough to navigate and interact with.
-* User has the ability to customize their profile (e.g. Profile Picture, Name, About Me, Favorite Movies, Recent Rating, etc.)
-* Ability to create and discuss posts regarding movies.
+---
 
-### Specifications and Interface Needs:
-* User authentication and secure data storage.
-* Upon creation of forum must access a movie database api to confirm it exists
-* Posts must be stored in such a way where other people can respond and replies/posts can appear on profile.
+## 🚀 Features
 
-### Program and Hardware:
-* Developing an application using Java and its frameworks.
-* Hosting the application on Firebase.
-* Integration movie database APIs.
+* **User Authentication**: Secure sign-up and login system utilizing Firebase Authentication.
+* **Movie Discovery**: 
+    * View trending movies on the dashboard.
+    * Search for movies using the massive TMDB database.
+    * View detailed movie information including plot, release year, and cast.
+* **Social & Community**:
+    * **Profiles**: Customize your profile with a bio and profile picture (with crop/zoom functionality).
+    * **Follow System**: Follow other users to build your network.
+    * **User Search**: Find friends and other users by username.
+* **Ratings & Reviews**:
+    * Rate movies on a 5-star scale.
+    * Write and publish written reviews.
+    * View community ratings alongside official TMDB statistics.
+* **Favorites**: Curate a list of your top favorite films displayed directly on your profile.
+
+---
+
+## 🛠 Tech Stack
+
+* **Language**: Java (JDK 21)
+* **Frontend**: JavaFX (FXML for UI design)
+* **Build Tool**: Maven
+* **Backend / Database**: Google Firebase (Firestore)
+* **File Storage**: Google Cloud Storage (for Profile Pictures)
+* **External API**: The Movie Database (TMDB) API
+* **Libraries**: 
+    * Gson (JSON Parsing)
+    * Java.net.http (API Requests)
+
+---
+
+## 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+* [Java Development Kit (JDK) 21](https://www.oracle.com/java/technologies/downloads/#java21) or higher.
+* [IntelliJ IDEA](https://www.jetbrains.com/idea/) (Recommended) or any Java IDE.
+* A Google Firebase Project (for the database connection).
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/yourusername/MovieLetterbox.git](https://github.com/yourusername/MovieLetterbox.git)
+cd MovieLetterbox
