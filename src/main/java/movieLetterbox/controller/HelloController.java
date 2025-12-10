@@ -28,6 +28,8 @@ import javafx.scene.shape.Circle;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -117,15 +119,26 @@ public class HelloController {
             try {
                 User user = firebaseService.getUserByUsername(username);
 
-                Platform.runLater(() -> {
-                    if (user == null) {
-                        feedbackLabel.setText("Sign-in failed: User not found.");
-                        return;
+                if (user == null) {
+                    Platform.runLater(() -> feedbackLabel.setText("Sign-in failed: User not found."));
+                    return;
+                }
+
+                String storedPassword = user.getPassword();
+
+                if (password.equals(storedPassword)) {
+                    // --- NEW LOGIC: Update Last Login Time ---
+                    try {
+                        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                        user.setLastLogin(currentTime);
+                        firebaseService.updateUser(user); // Save to Firestore
+                    } catch (Exception e) {
+                        System.err.println("Failed to update last login: " + e.getMessage());
+                        // We continue anyway, as login shouldn't fail just because timestamp failed
                     }
 
-                    String storedPassword = user.getPassword();
-
-                    if (password.equals(storedPassword)) {
+                    // Load Main Menu on UI Thread
+                    Platform.runLater(() -> {
                         try {
                             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
                             Scene scene = new Scene(fxmlLoader.load(), MainApplication.WINDOW_WIDTH, MainApplication.WINDOW_HEIGHT);
@@ -147,11 +160,11 @@ public class HelloController {
                             e.printStackTrace();
                             feedbackLabel.setText("Login successful, but failed to load main menu.");
                         }
+                    });
 
-                    } else {
-                        feedbackLabel.setText("Sign-in failed: Incorrect password.");
-                    }
-                });
+                } else {
+                    Platform.runLater(() -> feedbackLabel.setText("Sign-in failed: Incorrect password."));
+                }
 
             } catch (ExecutionException | InterruptedException e) {
                 System.err.println("Error during sign-in process.");
@@ -201,6 +214,8 @@ public class HelloController {
         newUser.setPhone(phone);
         newUser.setBio(bio);
         newUser.setProfilePhotoUrl(null);
+        // Set registered time
+        newUser.setRegistered(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         // RUN ASYNC
         CompletableFuture.runAsync(() -> {
