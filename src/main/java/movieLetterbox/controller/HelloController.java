@@ -28,8 +28,10 @@ import javafx.scene.shape.Circle;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -49,7 +51,7 @@ public class HelloController {
     @FXML private TextField signUpEmailField;
     @FXML private PasswordField signUpPasswordField;
     @FXML private TextField signUpUsernameField;
-    @FXML private TextField signUpAgeField;
+    @FXML private TextField signUpDobField; // Renamed from signUpAgeField
     @FXML private TextField signUpPhoneField;
     @FXML private PasswordField signUpConfirmPasswordField;
 
@@ -188,13 +190,21 @@ public class HelloController {
         String password = signUpPasswordField.getText();
         String confirmPassword = signUpConfirmPasswordField.getText();
         String username = signUpUsernameField.getText();
-        String age = signUpAgeField.getText();
+        String dob = signUpDobField.getText(); // Changed from age to dob
         String phone = signUpPhoneField.getText();
         String bio = signUpBioArea.getText();
 
         if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() ||
-                username.isBlank() || age.isBlank() || phone.isBlank()) {
+                username.isBlank() || dob.isBlank() || phone.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
+            return;
+        }
+
+        // Validate Date Format (YYYY-MM-DD)
+        try {
+            LocalDate.parse(dob, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            feedbackLabel.setText("Date of birth must be YYYY-MM-DD (e.g., 1990-01-01).");
             return;
         }
 
@@ -210,7 +220,7 @@ public class HelloController {
         newUser.setEmail(email);
         newUser.setPassword(password);
         newUser.setUsername(username);
-        newUser.setAge(age);
+        newUser.setDob(dob); // Set DOB instead of Age
         newUser.setPhone(phone);
         newUser.setBio(bio);
         newUser.setProfilePhotoUrl(null);
@@ -329,7 +339,7 @@ public class HelloController {
         signUpPasswordField.clear();
         signUpConfirmPasswordField.clear();
         signUpUsernameField.clear();
-        signUpAgeField.clear();
+        signUpDobField.clear(); // Clear DOB field
         signUpPhoneField.clear();
         signUpBioArea.clear();
 

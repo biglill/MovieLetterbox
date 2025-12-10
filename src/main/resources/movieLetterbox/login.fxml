@@ -92,8 +92,8 @@
             <VBox spacing="15.0" HBox.hgrow="ALWAYS" maxWidth="300">
                 <HBox spacing="10">
                     <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-                        <Label text="Age" styleClass="label-bold"/>
-                        <TextField fx:id="signUpAgeField" promptText="Age" styleClass="text-input" />
+                        <Label text="Date of Birth" styleClass="label-bold"/>
+                        <TextField fx:id="signUpDobField" promptText="YYYY-MM-DD" styleClass="text-input" />
                     </VBox>
                     <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                         <Label text="Phone" styleClass="label-bold"/>

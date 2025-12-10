@@ -1,5 +1,8 @@
 package movieLetterbox.model;
 
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,11 +18,10 @@ public class User {
     private int totalLikes;
 
     private String name;
-    private String age;
+    private String dob; // Changed from 'age' to 'dob' (YYYY-MM-DD)
     private String phone;
 
     private List<String> favorites = new ArrayList<>();
-    // NEW: List to store IDs of people this user follows
     private List<String> following = new ArrayList<>();
 
     public User() {}
@@ -54,8 +56,20 @@ public class User {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    public String getAge() { return age; }
-    public void setAge(String age) { this.age = age; }
+    // Replaces getAge/setAge
+    public String getDob() { return dob; }
+    public void setDob(String dob) { this.dob = dob; }
+
+    // Helper: Calculates Age dynamically from DOB
+    public String getAge() {
+        if (dob == null || dob.isBlank()) return "N/A";
+        try {
+            LocalDate birthDate = LocalDate.parse(dob, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+            return String.valueOf(Period.between(birthDate, LocalDate.now()).getYears());
+        } catch (Exception e) {
+            return "N/A";
+        }
+    }
 
     public String getPhone() { return phone; }
     public void setPhone(String phone) { this.phone = phone; }
@@ -66,7 +80,6 @@ public class User {
     }
     public void setFavorites(List<String> favorites) { this.favorites = favorites; }
 
-    // NEW: Getter and Setter for Following
     public List<String> getFollowing() {
         if (following == null) following = new ArrayList<>();
         return following;
