@@ -7,30 +7,36 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data model class representing a Movie.
+ * Stores information fetched from TMDB as well as local community data (ratings/favorites).
+ */
 public class Movie {
     private String movieId;
     private String name;
     private int year;
-    private String ageRating; // TMDB doesn't always provide certification in basic details
+    private String ageRating;
     private String release;
     private String runtime;
     private String genre;
     private String plot;
     private String language;
     private String country;
-    private String rewards; // TMDB doesn't provide awards info
+    private String rewards;
     private String posterPic;
     private int favoriteCount;
     private int ratingCount;
     private double ratingTotal;
-    private double tmdbRating; // NEW: Store TMDB Rating
+    private double tmdbRating;
 
-    // TMDB Image Base URL
+    // Base URL for fetching images from TMDB
     private static final String IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w500";
 
     public Movie() {}
 
-    // Constructor for Manual Creation
+    /**
+     * Constructor for manually creating a movie object (e.g. for testing).
+     */
     public Movie(String movieId, String name, int year, String posterPic) {
         this.movieId = movieId;
         this.name = name;
@@ -38,9 +44,12 @@ public class Movie {
         this.posterPic = posterPic;
     }
 
-    // Constructor for TMDB JSON
+    /**
+     * Constructor that parses a TMDB JSON Object to populate movie fields.
+     * Handles both 'Search Results' and 'Movie Details' JSON structures.
+     */
     public Movie(JsonObject json) {
-        // Handle ID (supports both search results and detail results)
+        // Handle ID
         if (json.has("id")) {
             this.movieId = String.valueOf(json.get("id").getAsInt());
         }
@@ -48,7 +57,7 @@ public class Movie {
         // Title
         this.name = json.has("title") ? json.get("title").getAsString() : "Unknown Title";
 
-        // Year / Release Date
+        // Year / Release Date parsing
         if (json.has("release_date") && !json.get("release_date").getAsString().isEmpty()) {
             String date = json.get("release_date").getAsString(); // Format: YYYY-MM-DD
             this.release = date;
@@ -62,7 +71,7 @@ public class Movie {
             this.release = "N/A";
         }
 
-        // Poster
+        // Poster Path Construction
         if (json.has("poster_path") && !json.get("poster_path").isJsonNull()) {
             this.posterPic = IMAGE_BASE_URL + json.get("poster_path").getAsString();
         } else {
@@ -79,7 +88,7 @@ public class Movie {
             this.runtime = "N/A";
         }
 
-        // Genre (In details, it's an array of objects. In search, it's an array of IDs - simplified here)
+        // Genre Parsing (handles array of objects vs array of IDs if needed)
         if (json.has("genres")) {
             JsonArray genres = json.getAsJsonArray("genres");
             List<String> genreList = new ArrayList<>();
@@ -91,8 +100,7 @@ public class Movie {
             this.genre = "N/A";
         }
 
-        // Rating (Vote Average)
-        // Parse TMDB rating (0-10)
+        // Rating (Vote Average from TMDB 0-10)
         this.tmdbRating = json.has("vote_average") ? json.get("vote_average").getAsDouble() : 0.0;
 
         // Default / Missing Fields
@@ -101,6 +109,7 @@ public class Movie {
         this.rewards = "N/A";
         this.ageRating = "N/A";
 
+        // Initialize counters
         this.favoriteCount = 0;
         this.ratingCount = 0;
         this.ratingTotal = 0;

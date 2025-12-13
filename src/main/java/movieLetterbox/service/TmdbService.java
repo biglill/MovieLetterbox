@@ -10,11 +10,14 @@ import java.nio.charset.StandardCharsets;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+/**
+ * Service class that handles all HTTP communication with The Movie Database (TMDB) API.
+ * Responsible for searching movies, fetching movie details, and getting trending lists.
+ */
 public class TmdbService {
-    // TMDB Base URL
     private static final String BASE_URL = "https://api.themoviedb.org/3";
 
-    // You pasted a Bearer Token (Long JWT), so we will use it as such.
+    // Bearer Token for API Authentication
     private final String BEARER_TOKEN = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiNWM2OWRiYjFkZGIzMDE0YWZiMjI4YzVlYzk5MGNmOCIsIm5iZiI6MTc1Nzg3MTE3OS4yMTgsInN1YiI6IjY4YzZmYzRiZDk3MjAzOTVmYWYyMWQ3ZCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.bUfEg5f-_0AMYquE-A2VLraxDY-1rqsJ-T9GP4E_lMc";
 
     private final HttpClient client;
@@ -23,10 +26,14 @@ public class TmdbService {
         this.client = HttpClient.newHttpClient();
     }
 
+    /**
+     * Helper method to send a GET request to the provided URL.
+     * Includes the necessary Authorization headers.
+     */
     private JsonObject sendRequest(String url) throws IOException, InterruptedException {
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(url))
-                .header("Authorization", "Bearer " + BEARER_TOKEN) // CHANGED: Use Header for Bearer Token
+                .header("Authorization", "Bearer " + BEARER_TOKEN)
                 .header("accept", "application/json")
                 .GET()
                 .build();
@@ -41,22 +48,27 @@ public class TmdbService {
         return JsonParser.parseString(response.body()).getAsJsonObject();
     }
 
+    /**
+     * Searches TMDB for movies matching the given query string.
+     */
     public JsonObject searchMovies(String query) throws IOException, InterruptedException {
         String encodedQuery = URLEncoder.encode(query, StandardCharsets.UTF_8);
-        // CHANGED: Removed "?api_key=" from URL
         String url = BASE_URL + "/search/movie?query=" + encodedQuery + "&language=en-US&page=1&include_adult=false";
         return sendRequest(url);
     }
 
+    /**
+     * Fetches detailed information for a specific movie ID.
+     */
     public JsonObject getMovieById(String movieId) throws IOException, InterruptedException {
-        // CHANGED: Removed "?api_key=" from URL
         String url = BASE_URL + "/movie/" + movieId + "?language=en-US";
         return sendRequest(url);
     }
 
-    // NEW: Get Trending Movies
+    /**
+     * Retrieves the list of movies currently trending for the week.
+     */
     public JsonObject getTrendingMovies() throws IOException, InterruptedException {
-        // Fetches the list of trending movies for the week
         String url = BASE_URL + "/trending/movie/week?language=en-US";
         return sendRequest(url);
     }

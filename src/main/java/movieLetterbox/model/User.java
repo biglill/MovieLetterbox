@@ -6,6 +6,10 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Data model representing a registered user.
+ * Stores personal details, authentication info, and social graph data (favorites/following).
+ */
 public class User {
     private String userId;
     private String email;
@@ -18,7 +22,7 @@ public class User {
     private int totalLikes;
 
     private String name;
-    private String dob; // Changed from 'age' to 'dob' (YYYY-MM-DD)
+    private String dob; // Date of Birth (YYYY-MM-DD)
     private String phone;
 
     private List<String> favorites = new ArrayList<>();
@@ -56,11 +60,10 @@ public class User {
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
-    // Replaces getAge/setAge
     public String getDob() { return dob; }
     public void setDob(String dob) { this.dob = dob; }
 
-    // Helper: Calculates Age dynamically from DOB
+    // Helper: Calculates Age dynamically from DOB for display purposes
     public String getAge() {
         if (dob == null || dob.isBlank()) return "N/A";
         try {

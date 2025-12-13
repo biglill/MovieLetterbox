@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
-import javafx.fxml.FXML; // Added missing import
+import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.ComboBox;
@@ -31,6 +31,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Controller for the Main Dashboard / Menu.
+ * Handles displaying trending movies, searching for movies/users, and navigating to profiles.
+ */
 public class MainMenuController {
 
     @FXML private Label welcomeLabel;
@@ -45,9 +49,10 @@ public class MainMenuController {
     private final TmdbService tmdbService = MainApplication.tmdbService;
     private final FirebaseService firebaseService = MainApplication.firebaseService;
 
-    // OLD: Removed hardcoded list
-    // private final String[] RECENT_MOVIES = { ... };
-
+    /**
+     * Initializes the user data and loads the dashboard content.
+     * Sets up the profile image in the top bar.
+     */
     public void setUserData(User user) {
         this.user = user;
         if (user != null) {
@@ -80,6 +85,7 @@ public class MainMenuController {
             searchField.setOnAction(event -> handleSearch());
         }
 
+        // Configure the Search Type dropdown (Movies vs People)
         if (searchTypeCombo != null) {
             searchTypeCombo.setButtonCell(new ListCell<String>() {
                 @Override
@@ -121,6 +127,9 @@ public class MainMenuController {
         }
     }
 
+    /**
+     * Searches Firestore for users matching the query and displays them in the grid.
+     */
     private void searchUsers(String query) {
         movieGrid.getChildren().clear();
         Label loadingLabel = new Label("Searching users...");
@@ -175,6 +184,7 @@ public class MainMenuController {
 
         card.getChildren().addAll(profileImg, nameLabel);
 
+        // Click to view user profile
         card.setOnMouseClicked(e -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("profile-view.fxml"));
@@ -197,7 +207,10 @@ public class MainMenuController {
         return card;
     }
 
-    // --- MOVIE SEARCH LOGIC (UPDATED FOR TMDB) ---
+    /**
+     * Loads trending movies from TMDB for the main dashboard.
+     * Also fetches hybrid rating data from Firebase for each movie found.
+     */
     private void loadDashboardMovies() {
         movieGrid.getChildren().clear();
         Label loadingLabel = new Label("Loading Trending Movies...");
@@ -206,7 +219,6 @@ public class MainMenuController {
 
         CompletableFuture.runAsync(() -> {
             try {
-                // CHANGED: Use new getTrendingMovies method
                 JsonObject result = tmdbService.getTrendingMovies();
 
                 Platform.runLater(() -> movieGrid.getChildren().remove(loadingLabel));
@@ -214,13 +226,14 @@ public class MainMenuController {
                 if (result != null && result.has("results")) {
                     JsonArray results = result.getAsJsonArray("results");
 
-                    // Limit to top 10
+                    // Limit display to top 10 trending items
                     int count = 0;
                     for (JsonElement element : results) {
                         if (count >= 10) break;
 
                         Movie tmdbMovie = new Movie(element.getAsJsonObject());
 
+                        // Fetch community data asynchronously for each movie
                         CompletableFuture.runAsync(() -> {
                             try {
                                 Movie firebaseMovie = firebaseService.getMovie(tmdbMovie.getMovieId());
@@ -243,6 +256,9 @@ public class MainMenuController {
         });
     }
 
+    /**
+     * Searches TMDB for movies matching the query.
+     */
     private void searchMovies(String query) {
         movieGrid.getChildren().clear();
 
@@ -269,8 +285,6 @@ public class MainMenuController {
                     }
 
                     for (JsonElement element : results) {
-                        // Create Movie directly from search result JSON
-                        // TMDB search results contain enough info for a card (Title, Poster, ID, Rating)
                         Movie tmdbMovie = new Movie(element.getAsJsonObject());
 
                         // Check Firebase for community rating
@@ -296,26 +310,28 @@ public class MainMenuController {
         });
     }
 
-    // Removed fetchAndAddMovieByTitle as it's no longer used for dashboard loading
-
+    /**
+     * Creates a movie card widget and adds it to the grid.
+     * Integrates community ratings if available in Firebase.
+     */
     private void addMovieToGrid(Movie tmdbMovie, Movie firebaseMovie) {
         if (tmdbMovie != null) {
-            // --- HYBRID RATING LOGIC ---
             int rating = 0;
 
             if (firebaseMovie != null && firebaseMovie.getRatingCount() > 0) {
-                // Priority: Use Community Rating
+                // Calculate average rating from community data
                 double avg = firebaseMovie.getRatingTotal() / (double) firebaseMovie.getRatingCount();
                 rating = (int) Math.round(avg);
             }
-            // Optional: If no community rating, you could use TMDB's 'vote_average' (0-10) scaled to 0-5
-            // But usually we leave it as 0 stars if no user has reviewed it yet.
 
             VBox card = createMovieCard(tmdbMovie, rating);
             movieGrid.getChildren().add(card);
         }
     }
 
+    /**
+     * UI Helper to build the visual movie card component.
+     */
     private VBox createMovieCard(Movie movie, int rating) {
         VBox card = new VBox();
         card.getStyleClass().add("movie-card");
@@ -357,6 +373,7 @@ public class MainMenuController {
         }
         card.getChildren().addAll(poster, titleLabel, ratingText, stars);
 
+        // Click event to open Movie Details
         card.setOnMouseClicked(e -> {
             try {
                 FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("movie-details.fxml"));
@@ -367,7 +384,7 @@ public class MainMenuController {
                 }
 
                 MovieDetailsController controller = fxmlLoader.getController();
-                controller.setMovieData(movie.getMovieId()); // TMDB ID
+                controller.setMovieData(movie.getMovieId());
                 controller.setUserData(this.user);
 
                 Stage stage = (Stage) welcomeLabel.getScene().getWindow();

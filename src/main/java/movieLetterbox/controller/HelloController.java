@@ -35,11 +35,16 @@ import java.time.format.DateTimeParseException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Controller class for the Login and Sign-Up screens.
+ * Handles user authentication, account creation, and profile picture cropping/uploading.
+ */
 public class HelloController {
 
     private FirebaseService firebaseService;
     private File selectedPhotoFile;
 
+    // FXML Component References
     @FXML private VBox signInPane;
     @FXML private VBox signUpPane;
     @FXML private Label feedbackLabel;
@@ -51,31 +56,38 @@ public class HelloController {
     @FXML private TextField signUpEmailField;
     @FXML private PasswordField signUpPasswordField;
     @FXML private TextField signUpUsernameField;
-    @FXML private TextField signUpDobField; // Renamed from signUpAgeField
+    @FXML private TextField signUpDobField;
     @FXML private TextField signUpPhoneField;
     @FXML private PasswordField signUpConfirmPasswordField;
 
     @FXML private TextArea signUpBioArea;
 
+    // Image cropping components
     @FXML private ImageView profileImageView;
     @FXML private Label profilePhotoLabel;
-
     @FXML private StackPane imageCropContainer;
     @FXML private Slider zoomSlider;
 
+    // Variables for drag-and-drop image adjustment
     private double startX, startY;
     private double initialTranslateX, initialTranslateY;
 
+    /**
+     * Called automatically after FXML loading.
+     * Initializes services and sets up mouse listeners for the profile image cropper.
+     */
     @FXML
     public void initialize() {
         firebaseService = MainApplication.firebaseService;
 
+        // Set up the circular clip and drag handlers for the profile photo cropper
         if (imageCropContainer != null) {
             Circle clip = new Circle(50);
             clip.setCenterX(50);
             clip.setCenterY(50);
             imageCropContainer.setClip(clip);
 
+            // Capture initial position on mouse press
             imageCropContainer.setOnMousePressed(e -> {
                 startX = e.getSceneX();
                 startY = e.getSceneY();
@@ -83,6 +95,7 @@ public class HelloController {
                 initialTranslateY = profileImageView.getTranslateY();
             });
 
+            // Update image position on drag
             imageCropContainer.setOnMouseDragged(e -> {
                 double deltaX = e.getSceneX() - startX;
                 double deltaY = e.getSceneY() - startY;
@@ -91,6 +104,7 @@ public class HelloController {
             });
         }
 
+        // Link the slider to the image scale properties for zooming
         if (zoomSlider != null) {
             zoomSlider.valueProperty().addListener((obs, oldVal, newVal) -> {
                 profileImageView.setScaleX(newVal.doubleValue());
@@ -99,6 +113,10 @@ public class HelloController {
         }
     }
 
+    /**
+     * Handles the Sign-In process.
+     * Verifies credentials against Firestore and transitions to the Main Menu.
+     */
     @FXML
     void handleSignInAction(ActionEvent event) {
         if (firebaseService == null) {
@@ -114,9 +132,9 @@ public class HelloController {
             return;
         }
 
-        feedbackLabel.setText("Signing in..."); // Show loading state
+        feedbackLabel.setText("Signing in..."); // Indicate loading
 
-        // RUN ASYNC to prevent UI Freeze
+        // Perform network operations on a background thread
         CompletableFuture.runAsync(() -> {
             try {
                 User user = firebaseService.getUserByUsername(username);
@@ -129,17 +147,16 @@ public class HelloController {
                 String storedPassword = user.getPassword();
 
                 if (password.equals(storedPassword)) {
-                    // --- NEW LOGIC: Update Last Login Time ---
+                    // Update the last login timestamp in the database
                     try {
                         String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                         user.setLastLogin(currentTime);
-                        firebaseService.updateUser(user); // Save to Firestore
+                        firebaseService.updateUser(user);
                     } catch (Exception e) {
                         System.err.println("Failed to update last login: " + e.getMessage());
-                        // We continue anyway, as login shouldn't fail just because timestamp failed
                     }
 
-                    // Load Main Menu on UI Thread
+                    // Transition to the Main Menu on the JavaFX UI Thread
                     Platform.runLater(() -> {
                         try {
                             FXMLLoader fxmlLoader = new FXMLLoader(MainApplication.class.getResource("main-menu.fxml"));
@@ -149,6 +166,7 @@ public class HelloController {
                                 scene.getStylesheets().add(MainApplication.class.getResource("Style.css").toExternalForm());
                             }
 
+                            // Pass the authenticated user data to the next controller
                             MainMenuController controller = fxmlLoader.getController();
                             controller.setUserData(user);
 
@@ -178,6 +196,10 @@ public class HelloController {
         });
     }
 
+    /**
+     * Handles the Sign-Up process.
+     * Creates a new user in Firestore and uploads the profile photo to Cloud Storage.
+     */
     @FXML
     void handleSignUpAction(ActionEvent event) {
         if (firebaseService == null) {
@@ -185,22 +207,23 @@ public class HelloController {
             return;
         }
 
+        // Retrieve field data
         String name = signUpNameField.getText();
         String email = signUpEmailField.getText();
         String password = signUpPasswordField.getText();
         String confirmPassword = signUpConfirmPasswordField.getText();
         String username = signUpUsernameField.getText();
-        String dob = signUpDobField.getText(); // Changed from age to dob
+        String dob = signUpDobField.getText();
         String phone = signUpPhoneField.getText();
         String bio = signUpBioArea.getText();
 
+        // Basic Validation
         if (name.isBlank() || email.isBlank() || password.isBlank() || confirmPassword.isBlank() ||
                 username.isBlank() || dob.isBlank() || phone.isBlank()) {
             feedbackLabel.setText("Please fill in all sign-up fields.");
             return;
         }
 
-        // Validate Date Format (YYYY-MM-DD)
         try {
             LocalDate.parse(dob, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         } catch (DateTimeParseException e) {
@@ -213,32 +236,31 @@ public class HelloController {
             return;
         }
 
-        feedbackLabel.setText("Creating account..."); // Loading state
+        feedbackLabel.setText("Creating account...");
 
         User newUser = new User();
         newUser.setName(name);
         newUser.setEmail(email);
         newUser.setPassword(password);
         newUser.setUsername(username);
-        newUser.setDob(dob); // Set DOB instead of Age
+        newUser.setDob(dob);
         newUser.setPhone(phone);
         newUser.setBio(bio);
         newUser.setProfilePhotoUrl(null);
-        // Set registered time
         newUser.setRegistered(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
-        // RUN ASYNC
         CompletableFuture.runAsync(() -> {
             try {
+                // Save text details first to get the User ID
                 String newUserId = firebaseService.saveUserDetails(newUser);
                 System.out.println("Successfully saved user data with ID: " + newUserId);
 
+                // Handle Image Upload if selected
                 if (profileImageView.getImage() != null && selectedPhotoFile != null) {
                     try {
-                        // Snapshot must be on UI thread
                         final File[] tempFileContainer = {null};
 
-                        // We need to wait for the UI operation to finish before uploading
+                        // Use a Future to wait for the UI thread to snapshot the cropped image
                         CompletableFuture<Void> snapshotFuture = new CompletableFuture<>();
 
                         Platform.runLater(() -> {
@@ -256,7 +278,7 @@ public class HelloController {
                             }
                         });
 
-                        snapshotFuture.join(); // Wait for snapshot
+                        snapshotFuture.join(); // Block until snapshot is created
 
                         if (tempFileContainer[0] != null) {
                             firebaseService.uploadProfilePhoto(tempFileContainer[0], newUserId);
@@ -284,6 +306,9 @@ public class HelloController {
         });
     }
 
+    /**
+     * Opens a file chooser for the user to select a profile picture.
+     */
     @FXML
     void handleChoosePhotoAction(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
@@ -297,6 +322,7 @@ public class HelloController {
 
         if (file != null) {
             try {
+                // Reset crop/zoom settings for the new image
                 profileImageView.setTranslateX(0);
                 profileImageView.setTranslateY(0);
                 profileImageView.setScaleX(1);
@@ -333,13 +359,16 @@ public class HelloController {
         signInPane.setVisible(false);
     }
 
+    /**
+     * Resets all fields in the Sign-Up form.
+     */
     private void clearSignUpForm() {
         signUpNameField.clear();
         signUpEmailField.clear();
         signUpPasswordField.clear();
         signUpConfirmPasswordField.clear();
         signUpUsernameField.clear();
-        signUpDobField.clear(); // Clear DOB field
+        signUpDobField.clear();
         signUpPhoneField.clear();
         signUpBioArea.clear();
 

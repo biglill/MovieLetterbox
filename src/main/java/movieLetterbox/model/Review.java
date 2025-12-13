@@ -1,5 +1,9 @@
 package movieLetterbox.model;
 
+/**
+ * Data model representing a user review for a specific movie.
+ * Stored in Firestore within a sub-collection of the movie.
+ */
 public class Review {
     private String reviewId;
     private String movieId;
@@ -9,7 +13,7 @@ public class Review {
     private String reviewText;
     private String timestamp;
 
-    // Required empty constructor for Firestore
+    // Required empty constructor for Firestore serialization
     public Review() {}
 
     public Review(String userId, String username, String movieId, int rating, String reviewText) {
